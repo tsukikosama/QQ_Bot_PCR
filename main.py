@@ -7,7 +7,7 @@ from botpy import logging
 
 from botpy.ext.cog_yaml import read
 
-from Conn import getTokenByOpenId, bindToken
+from Conn import getTokenByOpenId, bindToken, updateTokenByOpenId
 from PcrUtils import rank
 import PcrUtils
 from pojo.AiUtils import getChat
@@ -18,21 +18,19 @@ _log = logging.get_logger()
 from botpy.message import GroupMessage, Message
 def matchCommod(message: Message):
     text = message.content.strip();
-    ## 判断是否是绑定token的指令 如果是 就直接返回
-    pat = r"^#绑定【(.*?)】$"
+    ## 判断是否是绑定token的指令 如果是 就直接返回 判定和换绑指令
+    pat = r"^#绑定|换绑【(.*?)】$"
     ma = re.search(pat, text)
     str = ""
     if ma:
-        if(ma.group(1) != None):
-           count =  bindToken(message.author.member_openid, ma.group(1))
-        if count is None :
-            str += "绑定失败"
-        else:
-            str += "绑定成功"
+        action, token = ma.groups()
+        if token == "绑定":
+           str +=  bindToken(message.group_openid, ma.group(1))
+        elif token == "换绑":
+            str += updateTokenByOpenId(message.group_openid, ma.group(1))
     ## 获取指令内容
     ##获取指令附带的值
     pattern = r"/([^#]*)\s*#?(.*)"
-    # pattern2 = r"#([^\s【]+)\s【([^】]+)】"
     match = re.search(pattern, text)
     ### QQ机器人自带指令 先不动
     if match:
@@ -56,13 +54,10 @@ def matchCommod(message: Message):
     print("匹配的内容",text)
     ## 判断指令是否是#pcr开头
     if match2:
-        print(match2.group(1))
-        print(match2.group(2))
-        print(match2.group(3))
         ## 判断发送消息的账号是否绑定了token
-        user = getTokenByOpenId(message.author.member_openid)
+        user = getTokenByOpenId(message.group_openid)
         if user is None:
-            str += "当前用户未绑定token,请重新绑定token后再使用改功能"
+            str += "当前群未绑定token,请重新绑定token后再使用改功能"
         else:
             PcrUtils.changeToken(message.author.member_openid)
             if match2.group(1).strip() == "出刀情况":
@@ -82,9 +77,6 @@ def matchCommod(message: Message):
             elif match2.group(1).strip() == "排名查询":
                 data = PcrUtils.getRankByNumber(match.group(3));
                 str += PcrUtils.getRankRecord(data);
-        # if match2.group(1) == "今日出刀情况":
-        #     data = PcrUtils.getattactCountByDate(match2.group(2));
-
 
     ### 旧指令
     # if match2:

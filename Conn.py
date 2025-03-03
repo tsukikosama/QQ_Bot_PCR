@@ -23,18 +23,36 @@ def initDateBase():
 def bindToken(openId, token):
     initConn();
     cursor.execute("INSERT INTO user_tokens (openid, token) VALUES (?, ?)", (openId, token))
+    if cursor.rowcount > 0 :
+        str = "绑定成功"
+    else:
+        str = "添加数据失败"
     conn.commit()
     closeConn()
-
-    return cursor.rowcount > 0 if cursor.rowcount else None
+    return str
 
 def getTokenByOpenId(openId):
     initConn();
     cursor.execute("SELECT token FROM user_tokens WHERE openid = ?", (openId,))
     result = cursor.fetchone()
+    if cursor.rowcount > 0 :
+        str = "绑定成功"
+    else:
+        str = "添加数据失败"
     conn.commit()
     closeConn()
-    return result[0] if result else None
+    return str
+
+def updateTokenByOpenId(openId, token):
+    initConn();
+    cursor.execute("UPDATE user_tokens SET token =? WHERE openid =?", (token, openId))
+    if cursor.rowcount > 0 :
+        str = "绑定成功"
+    else:
+        str = "添加数据失败"
+    conn.commit()
+    closeConn()
+    return str
 
 conn = None
 cursor = None
