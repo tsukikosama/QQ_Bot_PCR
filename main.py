@@ -6,100 +6,112 @@ import botpy
 from botpy import logging
 
 from botpy.ext.cog_yaml import read
+
+from Conn import getTokenByOpenId, bindToken
 from PcrUtils import rank
 import PcrUtils
-
+from pojo.AiUtils import getChat
 
 test_config = read(os.path.join(os.path.dirname(__file__), "config.yaml"))
 
 _log = logging.get_logger()
 from botpy.message import GroupMessage, Message
-def matchCommod(text):
+def matchCommod(message: Message):
+    text = message.content.strip();
+    ## 判断是否是绑定token的指令 如果是 就直接返回
+    pat = r"^#绑定【(.*?)】$"
+    ma = re.search(pat, text)
+    str = ""
+    if ma:
+        if(ma.group(1) != None):
+           count =  bindToken(message.author.member_openid, ma.group(1))
+        if count is None :
+            str += "绑定失败"
+        else:
+            str += "绑定成功"
     ## 获取指令内容
     ##获取指令附带的值
-    str = ""
     pattern = r"/([^#]*)\s*#?(.*)"
-    pattern2 = r"#([^\s【]+)\s【([^】]+)】"
+    # pattern2 = r"#([^\s【]+)\s【([^】]+)】"
     match = re.search(pattern, text)
+    ### QQ机器人自带指令 先不动
     if match:
         str = "\n"
         if match.group(1).strip() == "当前排名":
             data = rank(match.group(2))
-            str += getRankRecord(data);
+            str += PcrUtils.getRankRecord(data);
         elif match.group(1).strip() == "出刀情况":
             data = PcrUtils.attactCount();
-            str += getAttack(data);
+            str += PcrUtils.getAttack(data);
         elif match.group(1).strip() == "今日排名":
-            str += getTodayRank();
+            str += PcrUtils.getTodayRank();
         elif match.group(1).strip() == "排名查询":
             data = PcrUtils.getRankByNumber(match.group(2));
-            str += getRankRecord(data);
+            str += PcrUtils.getRankRecord(data);
         else:
             str = "匹配失败"
-    match2 = re.search(pattern2, text)
+    pattern2 = r"^#pcr\s+(\w+)\s*(【\s*(.*?)\s*】)?$"
+    match2 = re.match(pattern2, text)
+
+    print("匹配的内容",text)
+    ## 判断指令是否是#pcr开头
     if match2:
-        if match2.group(1).strip() == "出刀情况":
-            data = PcrUtils.getattactCountByDate(match2.group(2));
-            str += getAttack(data)
-        if match2.group(1).strip() == "ai":
-            data = getChat(match2.group(2))
-            str += data;
+        print(match2.group(1))
+        print(match2.group(2))
+        print(match2.group(3))
+        ## 判断发送消息的账号是否绑定了token
+        user = getTokenByOpenId(message.author.member_openid)
+        if user is None:
+            str += "当前用户未绑定token,请重新绑定token后再使用改功能"
+        else:
+            PcrUtils.changeToken(message.author.member_openid)
+            if match2.group(1).strip() == "出刀情况":
+                data = PcrUtils.getattactCountByDate(match2.group(3));
+                str += PcrUtils.getAttack(data)
+            elif match2.group(1).strip() == "公会总表":
+                data = PcrUtils.getAllAttactCount();
+                str += data
+            elif match2.group(1).strip() == "当前排名":
+                data = rank(match.group(3))
+                str += PcrUtils.getRankRecord(data);
+            elif match2.group(1).strip() == "出刀情况":
+                data = PcrUtils.attactCount();
+                str += PcrUtils.getAttack(data);
+            elif match2.group(1).strip() == "今日排名":
+                str += PcrUtils.getTodayRank();
+            elif match2.group(1).strip() == "排名查询":
+                data = PcrUtils.getRankByNumber(match.group(3));
+                str += PcrUtils.getRankRecord(data);
+        # if match2.group(1) == "今日出刀情况":
+        #     data = PcrUtils.getattactCountByDate(match2.group(2));
+
+
+    ### 旧指令
+    # if match2:
+    #     if match2.group(1).strip() == "出刀情况":
+    #         data = PcrUtils.getattactCountByDate(match2.group(2));
+    #         str += PcrUtils.getAttack(data)
+    #     if match2.group(1).strip() == "ai":
+    #         # data = getChat(match2.group(2))
+    #         # str += data;
+    #         str += "暂停服务"
+    #     if match2.group(1).strip() == "公会总表":
+    #         data = PcrUtils.getAllAttactCount();
+    #         str += data
+    #     if match2.group(1).strip() == "帮助":
+    #         str = "帮助文档:"
     return str
 
-def getRankRecord(data):
-    str = ""
-    if (data == []):
-        str = "未查询到当前排名的公会"
-    else:
-        for item in data:
-            str += f"排名{item.get('rank')}的公会:{item.get('clan_name')} 会长:{item.get('leader_name')} 总伤害:{item.get('damage')}\n"
-    return str
-def getAttack(data):
-    if data == []:
-        return "公会战还未开启，查询失败"
-    str = "";
-    killTotal = 0;
-    reimburseTotal = 0
-    for item in data:
-        print(item)
-        killCount = 0;
-        reimburseCount = 0;
-        # rec['name'] = item.get('name')
-        for record in item.get('damage_list'):
-            killCount += 1;
-            reimburseCount += record.get('reimburse')
-            # rec['kill'] += record.get('kill')
-            # rec['reimburse'] += record.get('reimburse')
-            # print(rec,"数据")
-        str += f"玩家名:{item.get('name'):<20} 出刀数:{killCount:<2} 补偿刀数:{reimburseCount:<2}\n"
-        killTotal += killCount;
-        reimburseTotal += reimburseCount;
-    str += f"总出刀人数:{len(data):<3} 出刀总数:{killTotal:<3} 补偿刀总数:{reimburseTotal:<3}"
-    return str
 
-def getTodayRank():
-    ids = PcrUtils.getBattleId();
-    todayRank = PcrUtils.getTodayRank(ids);
-    str = ""
-    if(todayRank.get('clan_name') != None):
-        str = f"今日五点 公会:{todayRank.get('clan_name')} 会长:{todayRank.get('leader_name')} 排名{todayRank.get('rank')} 总伤害:{todayRank.get('damage')}"
-    else:
-        str = f"今日五点 公会:咖啡馆 会长:'未来' 排名:{random.randint(1,1200)} 总伤害:{random.randint(1000000,90000000)}"
-    return str
+
+
 class MyClient(botpy.Client):
     async def on_ready(self):
         _log.info(f"robot 「{self.robot.name}」 启动成功!")
 
     async def on_group_at_message_create(self, message: Message):
-        # messageResult = await message._api.post_group_message(
-        #     group_openid=message.group_openid,
-        #     msg_type=0,
-        #     msg_id=message.id,
         _log.info({message})
-        # _log.info({self.robot.name})
-
-        # _log.info(message.content.strip())
-        res = matchCommod(message.content.strip());
+        res = matchCommod(message);
 
         messageResult = await message._api.post_group_message(
             group_openid=message.group_openid,

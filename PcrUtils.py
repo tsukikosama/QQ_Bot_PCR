@@ -11,6 +11,7 @@ import logging
 import time
 import hashlib
 
+import Conn
 
 """
     基本的request请求封装了一些必要的参数
@@ -20,6 +21,9 @@ import hashlib
 pcrconfig = os.path.join(os.path.dirname(__file__), 'pcrconfig.yaml')
 
 _log = logging.getLogger(__name__)
+
+
+token = None
 
 secret = "mNnGiylYAFXbY0gPy4Zw2nG+dz1t6TYHENz61fxR3Ic="
 def read_yaml(file_path):
@@ -41,10 +45,13 @@ class BaseRequest:
             "appkey":self.appkey,
             "sign":self.sign,
         }
+        s = token if token else "buvid3=3673CF0A-1082-6586-C4D6-C6058E39402200310infoc; b_nut=1709792100; _uuid=347D9A24-1AB4-4BEE-B7F7-CFF445DB101010B00392infoc; buvid_fp=3673CF0A-1082-6586-C4D6-C6058E39402200310infoc; buvid4=515D5D26-EDE2-A54D-6A1B-FC5F2DAD287501662-024030706-ldQSR%2BULMIQ6oJCY2Ms1KA%3D%3D; enable_web_push=DISABLE; FEED_LIVE_VERSION=V8; header_theme_version=CLOSE; home_feed_column=4; browser_resolution=450-649; CURRENT_FNVAL=4048; rpdid=|(m~RYRmluk0J'u~u)klm|l~; fingerprint=b701a029553ff3fa8fe52430954ca203; b_lsid=8A72533A_194DE6C0E93; buvid_fp_plain=undefined; SESSDATA=94bf7c9f%2C1754450457%2Cc0849%2A22CjDKOcV9hqXz7xyq9UU9i2FpmNPprTNa-OiPiz-t-bZANMKlDSJcTGmUw2dP3cXDxUQSVnBfR2VXM00tMmF6SkVBQUg4ZEl3WDZwZUFYYzNhSGRaZjBKY3hjbjRCUXhkaXQ3Ml9BbmY2UU5LZE5EbUZfVGVGLXVaeGtWMl9qamRabGVLQ2hvM05nIIEC; bili_jct=e0ef0693192fc5d4cf3da986243c50c2; DedeUserID=361428452; DedeUserID__ckMd5=531d4a820c52d3f6; sid=gdwt2a9y"
+        print(s)
+        ## 通过数据库来查询token
         self.headers = {
             "User-Agent":'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0',
             'Connection':'keep-alive',
-            "Cookie": "buvid3=3673CF0A-1082-6586-C4D6-C6058E39402200310infoc; b_nut=1709792100; _uuid=347D9A24-1AB4-4BEE-B7F7-CFF445DB101010B00392infoc; buvid_fp=3673CF0A-1082-6586-C4D6-C6058E39402200310infoc; buvid4=515D5D26-EDE2-A54D-6A1B-FC5F2DAD287501662-024030706-ldQSR%2BULMIQ6oJCY2Ms1KA%3D%3D; enable_web_push=DISABLE; FEED_LIVE_VERSION=V8; header_theme_version=CLOSE; home_feed_column=4; browser_resolution=450-649; CURRENT_FNVAL=4048; rpdid=|(m~RYRmluk0J'u~u)klm|l~; fingerprint=b701a029553ff3fa8fe52430954ca203; b_lsid=8A72533A_194DE6C0E93; buvid_fp_plain=undefined; SESSDATA=94bf7c9f%2C1754450457%2Cc0849%2A22CjDKOcV9hqXz7xyq9UU9i2FpmNPprTNa-OiPiz-t-bZANMKlDSJcTGmUw2dP3cXDxUQSVnBfR2VXM00tMmF6SkVBQUg4ZEl3WDZwZUFYYzNhSGRaZjBKY3hjbjRCUXhkaXQ3Ml9BbmY2UU5LZE5EbUZfVGVGLXVaeGtWMl9qamRabGVLQ2hvM05nIIEC; bili_jct=e0ef0693192fc5d4cf3da986243c50c2; DedeUserID=361428452; DedeUserID__ckMd5=531d4a820c52d3f6; sid=gdwt2a9y",
+            "Cookie": s,
             "Bili-Status-Code":"0",
             "X-Bili-Trace-Id":'1b72650df6ab5d64211db1174066b185',
             'X-Ticket-Status':'1',
@@ -87,9 +94,14 @@ def sendApi(url,param):
     if(json_data.get('code') != 0):
         return 500;
     return json_data.get('data');
+
+def changeToken(openId):
+    global token
+    token = Conn.getTokenByOpenId(openId);
+
+
 ###搜索公会排名
 def rank(name):
-    print("搜索的公会名称",name)
     params = {"name": name}
     decoded_data = sendApi('https://api.game.bilibili.com/game/player/tools/pcr/search_clan',params)
     return decoded_data
@@ -118,7 +130,6 @@ def getData():
 def attactCount():
     params = {
         "date":getData(),
-
     }
     decoded_data = sendApi('https://api.game.bilibili.com/game/player/tools/pcr/clan_daily_report_by_member', params)
 
@@ -140,21 +151,12 @@ def getBattleId():
 
 
 def getTodayRank(id):
-    # 获取今天日期
-    # today = datetime.today().date()
-    #
-    # # 组合出今天 5 点的 datetime 对象
-    # five_am = datetime.combine(today, time(5, 0, 0))
-    # # 格式化输出
-    # formatted_time = five_am.strftime("%Y-%m-%d %H:%M")
-
     params = {
-        "ranking_time":datetime.today().date().__str__() + " 05:00",
+        "ranking_time":getData() + " 05:00",
         "battle_id":id
     }
 
     data = sendApi("https://api.game.bilibili.com/game/player/tools/pcr/my_clan_ranking",params);
-
     return data;
 ###搜索rank排名
 def getRankByNumber(num):
@@ -164,9 +166,58 @@ def getRankByNumber(num):
     data = sendApi("https://api.game.bilibili.com/game/player/tools/pcr/search_clan", params);
 
     return data;
-# if __name__ == "__main__":
-#     # s = BaseRequest().fetch_data()
-#     # s = test()
-#     # print(s.fetch_data())
-#     # print(s.get('data',[]))
 
+###查询公会战出刀总表
+def getAllAttactCount():
+    params = {
+
+    }
+    data = sendApi("https://api.game.bilibili.com/game/player/tools/pcr/clan_collect_report",params)
+    print(data)
+    return data;
+
+## 获取出刀内容
+def getAttack(data):
+    if data == [] or data == None:
+        return "公会战还未开启，查询失败"
+    str = "";
+    killTotal = 0;
+    reimburseTotal = 0
+    for item in data:
+        print(item)
+        killCount = 0;
+        reimburseCount = 0;
+        # rec['name'] = item.get('name')
+        for record in item.get('damage_list'):
+            killCount += 1;
+            reimburseCount += record.get('reimburse')
+            # rec['kill'] += record.get('kill')
+            # rec['reimburse'] += record.get('reimburse')
+            # print(rec,"数据")
+        str += f"玩家名:{item.get('name'):<20} 出刀数:{killCount:<2} 补偿刀数:{reimburseCount:<2}\n"
+        killTotal += killCount;
+        reimburseTotal += reimburseCount;
+    str += f"总出刀人数:{len(data):<3} 出刀总数:{killTotal:<3} 补偿刀总数:{reimburseTotal:<3}"
+    return str
+
+##拼接排名结果
+def getRankRecord(data):
+    print(data,"asd")
+    str = ""
+    if (data == []):
+        str = "未查询到当前排名的公会"
+    else:
+        for item in data:
+            str += f"排名{item.get('rank')}的公会:{item.get('clan_name')} 会长:{item.get('leader_name')} 总伤害:{item.get('damage')}\n"
+    return str
+
+## 获取今日排名结果
+def getTodayRank():
+    ids = getBattleId();
+    todayRank = getTodayRank(ids);
+    str = ""
+    if(todayRank.get('clan_name') != None):
+        str = f"今日五点 公会:{todayRank.get('clan_name')} 会长:{todayRank.get('leader_name')} 排名{todayRank.get('rank')} 总伤害:{todayRank.get('damage')}"
+    else:
+        str = f"公会战数据为空"
+    return str
