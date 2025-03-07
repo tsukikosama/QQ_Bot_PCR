@@ -58,6 +58,7 @@ def matchCommod(message: Message):
     if match2:
         ## 判断发送消息的账号是否绑定了token
         user = getTokenByOpenId(message.group_openid)
+        print(user ,"是否存在")
         if user is None:
             str += "当前群未绑定token,请重新绑定token后再使用改功能"
         else:
