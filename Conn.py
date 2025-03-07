@@ -23,10 +23,13 @@ def initDateBase():
 def bindToken(openId, token):
     initConn();
     cursor.execute("INSERT INTO user_tokens (openid, token) VALUES (?, ?)", (openId, token))
-    if cursor.rowcount > 0 :
-        str = "绑定成功"
+    exists = cursor.fetchone()[0] > 0  # 判断是否存在
+    if exists:
+        cursor.execute("UPDATE user_tokens SET token = ? WHERE openid = ?", (token, openId))
+        str = "更新成功"
     else:
-        str = "添加数据失败"
+        cursor.execute("INSERT INTO user_tokens (openid, token) VALUES (?, ?)", (openId, token))
+        str = "绑定成功"
     conn.commit()
     closeConn()
     return str

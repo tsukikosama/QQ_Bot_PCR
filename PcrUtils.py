@@ -166,7 +166,6 @@ def getRankByNumber(num):
 ###查询公会战出刀总表
 def getAllAttactCount():
     params = {
-
     }
     data = sendApi("https://api.game.bilibili.com/game/player/tools/pcr/clan_collect_report",params)
     print(data)
@@ -180,16 +179,11 @@ def getAttack(data):
     killTotal = 0;
     reimburseTotal = 0
     for item in data:
-        print(item)
         killCount = 0;
         reimburseCount = 0;
-        # rec['name'] = item.get('name')
         for record in item.get('damage_list'):
             killCount += 1;
             reimburseCount += record.get('reimburse')
-            # rec['kill'] += record.get('kill')
-            # rec['reimburse'] += record.get('reimburse')
-            # print(rec,"数据")
         str += f"玩家名:{item.get('name'):<20} 出刀数:{killCount:<2} 补偿刀数:{reimburseCount:<2}\n"
         killTotal += killCount;
         reimburseTotal += reimburseCount;

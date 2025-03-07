@@ -19,15 +19,17 @@ from botpy.message import GroupMessage, Message
 def matchCommod(message: Message):
     text = message.content.strip();
     ## 判断是否是绑定token的指令 如果是 就直接返回 判定和换绑指令
-    pat = r"^#绑定|换绑【(.*?)】$"
+    pat = r"^#(绑定|换绑)【(.*?)】$"
     ma = re.search(pat, text)
     str = ""
     if ma:
         action, token = ma.groups()
-        if token == "绑定":
-           str +=  bindToken(message.group_openid, ma.group(1))
-        elif token == "换绑":
-            str += updateTokenByOpenId(message.group_openid, ma.group(1))
+        if action == "绑定":
+           str +=  bindToken(message.group_openid, token)
+           print(str)
+        elif action == "换绑":
+            str += updateTokenByOpenId(message.group_openid, token)
+        return str
     ## 获取指令内容
     ##获取指令附带的值
     pattern = r"/([^#]*)\s*#?(.*)"
@@ -77,7 +79,6 @@ def matchCommod(message: Message):
             elif match2.group(1).strip() == "排名查询":
                 data = PcrUtils.getRankByNumber(match.group(3));
                 str += PcrUtils.getRankRecord(data);
-
     ### 旧指令
     # if match2:
     #     if match2.group(1).strip() == "出刀情况":
@@ -111,6 +112,7 @@ class MyClient(botpy.Client):
             msg_id=message.id,
             content=res
         )
+
         # match = re.match(r"^排名#(.+)", message.content.strip())  # 匹配 "排名#" 开头，且后面必须有内容
         # if (match):
         #     data = rank(match.group(1));
