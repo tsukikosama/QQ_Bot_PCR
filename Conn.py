@@ -1,6 +1,8 @@
 import sqlite3
+import os
 
-db_path = "E:/test/test.db"
+db_path = os.path.join(os.path.expanduser("~"), "pcr", "pcr.db")
+
 
 
 
