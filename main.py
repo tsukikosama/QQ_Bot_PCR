@@ -60,23 +60,26 @@ def matchCommod(message: Message):
         user = getTokenByOpenId(message.group_openid)
         print(user ,"是否存在")
         if user is None:
-            str += "当前群未绑定token,请重新绑定token后再使用改功能"
+            str += "当前群未绑定token,请重新绑定token后再使用功能"
         else:
             PcrUtils.changeToken(message.author.member_openid)
+            ### 出刀情况 【日期】
             if match2.group(1).strip() == "出刀情况":
                 data = PcrUtils.getattactCountByDate(match2.group(3));
                 str += PcrUtils.getAttack(data)
             elif match2.group(1).strip() == "公会总表":
                 data = PcrUtils.getAllAttactCount();
                 str += data
+            ### 当前排名 【公会名】
             elif match2.group(1).strip() == "当前排名":
                 data = rank(match.group(3))
                 str += PcrUtils.getRankRecord(data);
-            elif match2.group(1).strip() == "出刀情况":
+            elif match2.group(1).strip() == "今日出刀情况":
                 data = PcrUtils.attactCount();
                 str += PcrUtils.getAttack(data);
             elif match2.group(1).strip() == "今日排名":
                 str += PcrUtils.getTodayRank();
+            ### 排名情况 【数字排名】 用处不大
             elif match2.group(1).strip() == "排名查询":
                 data = PcrUtils.getRankByNumber(match.group(3));
                 str += PcrUtils.getRankRecord(data);

@@ -3,10 +3,6 @@ import os
 
 db_path = os.path.join(os.path.expanduser("~"), "pcr", "pcr.db")
 
-
-
-
-
 ##初始化建表语句
 def initDateBase():
     # 创建 user_tokens 表
@@ -59,7 +55,6 @@ def updateTokenByOpenId(openId, token):
 
 conn = None
 cursor = None
-
 
 def initConn():
     global conn, cursor  # 声明全局变量
