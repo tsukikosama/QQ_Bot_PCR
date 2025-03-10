@@ -9,6 +9,10 @@ db_dir = os.path.dirname(db_path)
 ##初始化建表语句
 def initDateBase():
     # 创建 user_tokens 表
+    if not os.path.exists(db_dir):
+        os.makedirs(db_dir)
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS user_tokens (
             id INTEGER PRIMARY KEY AUTOINCREMENT,  -- 自增ID
@@ -67,9 +71,6 @@ def initConn():
 
     if conn is None:
         conn = sqlite3.connect(db_path)
-        if not os.path.exists(db_dir):
-            os.makedirs(db_dir)
-            initDateBase()
         cursor = conn.cursor()
 
 def closeConn():

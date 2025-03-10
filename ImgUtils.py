@@ -1,3 +1,4 @@
+import logging
 import os
 import random
 import shutil
@@ -15,5 +16,5 @@ def getRandomImgName():
 
         # 随机选择一个图片文件
         random_image = random.choice(image_files)
-
+        logging.info(f"获取到的图片名: {random_image}")
         return random_image

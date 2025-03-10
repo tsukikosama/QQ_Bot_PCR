@@ -5,7 +5,7 @@ from botpy import logging
 
 from botpy.ext.cog_yaml import read
 
-from Conn import getTokenByOpenId, bindToken, updateTokenByOpenId
+from Conn import getTokenByOpenId, bindToken, updateTokenByOpenId, initDateBase
 from ImgUtils import getRandomImgName
 from PcrUtils import rank
 import PcrUtils
@@ -151,8 +151,12 @@ if __name__ == "__main__":
     # intents = botpy.Intents.none()
     # intents.public_messages=True
     # 通过kwargs，设置需要监听的事件通道
+    db_path = os.path.join(os.path.expanduser("~"), "pcr", "pcr.db")
+    print(db_path)
     intents = botpy.Intents(public_messages=True)
     client = MyClient(intents=intents)
     client.run(appid=test_config["appid"], secret=test_config["secret"])
+    initDateBase()
+
 
 
