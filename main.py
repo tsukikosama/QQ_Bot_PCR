@@ -1,6 +1,4 @@
-import json
 import os
-import random
 import re
 import botpy
 from botpy import logging
@@ -8,9 +6,10 @@ from botpy import logging
 from botpy.ext.cog_yaml import read
 
 from Conn import getTokenByOpenId, bindToken, updateTokenByOpenId
+from ImgUtils import getRandomImgName
 from PcrUtils import rank
 import PcrUtils
-from pojo.AiUtils import getChat
+
 
 test_config = read(os.path.join(os.path.dirname(__file__), "config.yaml"))
 
@@ -26,7 +25,6 @@ def matchCommod(message: Message):
         action, token = ma.groups()
         if action == "绑定":
            str +=  bindToken(message.group_openid, token)
-           print(str)
         elif action == "换绑":
             str += updateTokenByOpenId(message.group_openid, token)
         return str
@@ -50,10 +48,8 @@ def matchCommod(message: Message):
             str += PcrUtils.getRankRecord(data);
         else:
             str = "匹配失败"
-    pattern2 = r"^#pcr\s+(\w+)\s*(【\s*(.*?)\s*】)?$"
+    pattern2 = r"^#pcr\s*【\s*(.*?)\s*】$"
     match2 = re.match(pattern2, text)
-
-    print("匹配的内容",text)
     ## 判断指令是否是#pcr开头
     if match2:
         ## 判断发送消息的账号是否绑定了token
@@ -83,6 +79,8 @@ def matchCommod(message: Message):
             elif match2.group(1).strip() == "排名查询":
                 data = PcrUtils.getRankByNumber(match.group(3));
                 str += PcrUtils.getRankRecord(data);
+            elif match2.group(1).strip() == "获取图片":
+                str += "获取图片"
     ### 旧指令
     # if match2:
     #     if match2.group(1).strip() == "出刀情况":
@@ -99,9 +97,6 @@ def matchCommod(message: Message):
     #         str = "帮助文档:"
     return str
 
-
-
-
 class MyClient(botpy.Client):
     async def on_ready(self):
         _log.info(f"robot 「{self.robot.name}」 启动成功!")
@@ -109,13 +104,28 @@ class MyClient(botpy.Client):
     async def on_group_at_message_create(self, message: Message):
         _log.info({message})
         res = matchCommod(message);
-
-        messageResult = await message._api.post_group_message(
-            group_openid=message.group_openid,
-            msg_type=0,
-            msg_id=message.id,
-            content=res
-        )
+        print(res,"内容")
+        if res.strip() == "获取图片":
+            imgName = getRandomImgName();
+            uploadMedia = await message._api.post_group_file(
+                group_openid=message.group_openid,
+                file_type=1,  # 文件类型要对应上，具体支持的类型见方法说明
+                url="http://8.138.16.124:8083/upload/"+imgName # 文件Url
+            )
+            print(uploadMedia)
+            await message._api.post_group_message(
+                group_openid=message.group_openid,
+                msg_type=7,
+                msg_id=message.id,
+                media=uploadMedia
+            )
+        else:
+            await message._api.post_group_message(
+                group_openid=message.group_openid,
+                msg_type=0,
+                msg_id=message.id,
+                content=res
+            )
 
         # match = re.match(r"^排名#(.+)", message.content.strip())  # 匹配 "排名#" 开头，且后面必须有内容
         # if (match):
@@ -144,4 +154,5 @@ if __name__ == "__main__":
     intents = botpy.Intents(public_messages=True)
     client = MyClient(intents=intents)
     client.run(appid=test_config["appid"], secret=test_config["secret"])
+
 

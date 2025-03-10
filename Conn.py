@@ -3,6 +3,9 @@ import os
 
 db_path = os.path.join(os.path.expanduser("~"), "pcr", "pcr.db")
 
+db_dir = os.path.dirname(db_path)
+
+
 ##初始化建表语句
 def initDateBase():
     # 创建 user_tokens 表
@@ -17,6 +20,7 @@ def initDateBase():
     # 提交更改
     conn.commit()
     print(f"数据库文件已创建: {db_path}")
+# 如果目录不存在，创建该目录
 
 def bindToken(openId, token):
     initConn();
@@ -56,10 +60,16 @@ def updateTokenByOpenId(openId, token):
 conn = None
 cursor = None
 
+
+
 def initConn():
     global conn, cursor  # 声明全局变量
+
     if conn is None:
         conn = sqlite3.connect(db_path)
+        if not os.path.exists(db_dir):
+            os.makedirs(db_dir)
+            initDateBase()
         cursor = conn.cursor()
 
 def closeConn():
