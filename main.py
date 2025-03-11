@@ -2,10 +2,12 @@ import os
 import re
 import botpy
 from botpy import logging
+from botpy.errors import ServerError
 
 from botpy.ext.cog_yaml import read
 
 from Conn import getTokenByOpenId, bindToken, updateTokenByOpenId, initDateBase
+from FileUtils import file_to_base64
 from ImgUtils import getRandomImgName
 from PcrUtils import rank
 import PcrUtils
@@ -18,7 +20,7 @@ from botpy.message import GroupMessage, Message
 def matchCommod(message: Message):
     text = message.content.strip();
     ## 判断是否是绑定token的指令 如果是 就直接返回 判定和换绑指令
-    pat = r"^#(绑定|换绑)【(.*?)】$"
+    pat = r"^#(\S+)(?:【(.*?)】)?$"
     ma = re.search(pat, text)
     str = ""
     if ma:
@@ -27,6 +29,8 @@ def matchCommod(message: Message):
            str +=  bindToken(message.group_openid, token)
         elif action == "换绑":
             str += updateTokenByOpenId(message.group_openid, token)
+        elif action == "获取图片":
+            str += "获取图片"
         return str
     ## 获取指令内容
     ##获取指令附带的值
@@ -79,8 +83,7 @@ def matchCommod(message: Message):
             elif match2.group(1).strip() == "排名查询":
                 data = PcrUtils.getRankByNumber(match.group(3));
                 str += PcrUtils.getRankRecord(data);
-            elif match2.group(1).strip() == "获取图片":
-                str += "获取图片"
+
     ### 旧指令
     # if match2:
     #     if match2.group(1).strip() == "出刀情况":
@@ -105,27 +108,61 @@ class MyClient(botpy.Client):
         _log.info({message})
         res = matchCommod(message);
         print(res,"内容")
+        uploadMedia = None
         if res.strip() == "获取图片":
+            max_attempts = 5
+            attempts = 0
             imgName = getRandomImgName();
-            uploadMedia = await message._api.post_group_file(
-                group_openid=message.group_openid,
-                file_type=1,  # 文件类型要对应上，具体支持的类型见方法说明
-                url="http://8.138.16.124:8083/upload/"+imgName # 文件Url
-            )
-            print(uploadMedia)
-            await message._api.post_group_message(
-                group_openid=message.group_openid,
-                msg_type=7,
-                msg_id=message.id,
-                media=uploadMedia
-            )
+            print("文件名", imgName)
+            try:
+                uploadMedia = await message._api.post_group_file(
+                        group_openid=message.group_openid,
+                        file_type=1,  # 文件类型要对应上，具体支持的类型见方法说明
+                    url="http://8.138.16.124:8083/upload/" + imgName,  # 文件Url
+                    )
+
+            except ServerError as e:
+                if uploadMedia is None and attempts < max_attempts :
+                    while(uploadMedia is None ):
+                        uploadMedia = await message._api.post_group_file(
+                            group_openid=message.group_openid,
+                            file_type=1,  # 文件类型要对应上，具体支持的类型见方法说明
+                            url="http://8.138.16.124:8083/upload/" + imgName,  # 文件Url
+                        )
+                        if uploadMedia is not None:
+                            break  # 如果成功获得 uploadMedia，则跳出循环
+            try:
+                print(uploadMedia)
+                await message._api.post_group_message(
+                    group_openid=message.group_openid,
+                    msg_type=7,
+                    msg_id=message.id,
+                    media=uploadMedia
+                )
+            except Exception:
+                await message._api.post_group_message(
+                    group_openid=message.group_openid,
+                    msg_type=0,
+                    msg_id=message.id,
+                    content="文件过大或网络异常"
+                )
         else:
-            await message._api.post_group_message(
-                group_openid=message.group_openid,
-                msg_type=0,
-                msg_id=message.id,
-                content=res
-            )
+            try:
+                await message._api.post_group_message(
+                    group_openid=message.group_openid,
+                    msg_type=0,
+                    msg_id=message.id,
+                    content=res
+                )
+            except ServerError as e:
+                await message._api.post_group_message(
+                    group_openid=message.group_openid,
+                    msg_type=0,
+                    msg_id=message.id,
+                    content="指令错误"
+                )
+        ####新的发送图片的方法
+
 
         # match = re.match(r"^排名#(.+)", message.content.strip())  # 匹配 "排名#" 开头，且后面必须有内容
         # if (match):
