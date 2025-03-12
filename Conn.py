@@ -1,7 +1,7 @@
 import sqlite3
 import os
 
-db_path = os.path.join(os.path.expanduser("~"), "pcr", "pcr.db")
+db_path = os.path.join(os.getcwd(), "pcr.db")
 
 db_dir = os.path.dirname(db_path)
 

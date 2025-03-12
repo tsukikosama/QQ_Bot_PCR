@@ -31,7 +31,8 @@ def matchCommod(message: Message):
             str += updateTokenByOpenId(message.group_openid, token)
         elif action == "获取图片":
             str += "获取图片"
-        return str
+        else:
+            str += "匹配失败"
     ## 获取指令内容
     ##获取指令附带的值
     pattern = r"/([^#]*)\s*#?(.*)"
@@ -51,14 +52,13 @@ def matchCommod(message: Message):
             data = PcrUtils.getRankByNumber(match.group(2));
             str += PcrUtils.getRankRecord(data);
         else:
-            str = "匹配失败"
+            str += "匹配失败"
     pattern2 = r"^#pcr\s*【\s*(.*?)\s*】$"
     match2 = re.match(pattern2, text)
     ## 判断指令是否是#pcr开头
     if match2:
         ## 判断发送消息的账号是否绑定了token
         user = getTokenByOpenId(message.group_openid)
-        print(user ,"是否存在")
         if user is None:
             str += "当前群未绑定token,请重新绑定token后再使用功能"
         else:
@@ -83,7 +83,8 @@ def matchCommod(message: Message):
             elif match2.group(1).strip() == "排名查询":
                 data = PcrUtils.getRankByNumber(match.group(3));
                 str += PcrUtils.getRankRecord(data);
-
+            else:
+                str = "匹配失败"
     ### 旧指令
     # if match2:
     #     if match2.group(1).strip() == "出刀情况":
@@ -107,7 +108,6 @@ class MyClient(botpy.Client):
     async def on_group_at_message_create(self, message: Message):
         _log.info({message})
         res = matchCommod(message);
-        print(res,"内容")
         uploadMedia = None
         if res.strip() == "获取图片":
             max_attempts = 5
@@ -120,7 +120,6 @@ class MyClient(botpy.Client):
                         file_type=1,  # 文件类型要对应上，具体支持的类型见方法说明
                     url="http://8.138.16.124:8083/upload/" + imgName,  # 文件Url
                     )
-
             except ServerError as e:
                 if uploadMedia is None and attempts < max_attempts :
                     while(uploadMedia is None ):
