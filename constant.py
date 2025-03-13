@@ -1,0 +1,7 @@
+ONE_RANK_IMG="自动rank表"
+ONE_ITEM_IMG="刷图推荐"
+OPERATE_RANK_IMG="手动rank表"
+ALL_RANK_IMG="rank表"
+
+
+rank_item = [ONE_ITEM_IMG,ONE_RANK_IMG , OPERATE_RANK_IMG, ALL_RANK_IMG]

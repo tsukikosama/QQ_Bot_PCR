@@ -4,6 +4,10 @@ import requests
 import time
 import json
 
+from Conn import getRankImgByTitle, getRankImgByTitleId, saveRankImg
+from ImgUtils import download_image_to_jpg
+from constant import ONE_RANK_IMG, rank_item
+
 # 目标 UP 主 UID
 UP_UID = "549739"  # 替换成你要监控的 UP 主 UID
 
@@ -25,9 +29,10 @@ def get_latest_dynamic():
         data = response.json()
         # print(data.get('data'))
         pattern = r"\d{2}[上下]半刷图攻略＆\d{2}-\dRANK表"
+
         for item in data.get('data').get('items'):
             if re.match(pattern,item.get('content')):
-                # print(item.get('jump_url'))
+                ## 这边取匹配到的第一个数据即可
                 clean_url = item.get('jump_url').lstrip("/")
                 response  = requests.get("https://" + clean_url, headers=headers)
                 soup = BeautifulSoup(response.text, 'html.parser')
@@ -35,11 +40,28 @@ def get_latest_dynamic():
                 images = soup.find_all('img')
                 image_urls = [img['src'] for img in images if img.get('src')]
                 regex = r"i0\.hdslb\.com/bfs/new_dyn/[^@]+"
-                for url in image_urls:
-                    match = re.search(regex, url)
-                    if match:
-                        print("https://"+match.group(0))
+                matchtext = re.match(r"\d+", item.get('content'))
+                ### 判断数据库中中是否存在相关数据
+                res = getRankImgByTitleId(matchtext.group(0))
+                rank_item_set = set()
+                if res == 0:
+                    i = 0;
+                    for url in image_urls:
+                    ### 如果没有获取到相同的编号的id就是新的数据保存到数据库中
+                        match = re.search(regex, url)
+                        if match:
+                             ##获取压缩后图片的路径
+                             view_url = download_image_to_jpg("https://"+match.group(0))
+                             rank_item_set.add((rank_item[i],view_url,matchtext.group(0),item.get('content')))
+                             i += 1
+                        if i > 3:
+                            break
+                        ### 匹配到了图片把图片下载到本地
+                        # print("https://"+match.group(0))
+                        # download_image_to_jpg("https://"+match.group(0))
+                break;
 
+        saveRankImg(rank_item_set)
     except Exception as e:
         print("获取动态失败:", str(e))
 

@@ -6,7 +6,7 @@ from botpy.errors import ServerError
 
 from botpy.ext.cog_yaml import read
 
-from Conn import getTokenByOpenId, bindToken, updateTokenByOpenId, initDateBase
+from Conn import getTokenByOpenId, bindToken, updateTokenByOpenId, initDateBase, getRankImgByTitle
 from FileUtils import file_to_base64
 from ImgUtils import getRandomImgName
 from PcrUtils import rank
@@ -83,23 +83,21 @@ def matchCommod(message: Message):
             elif match2.group(1).strip() == "排名查询":
                 data = PcrUtils.getRankByNumber(match.group(3));
                 str += PcrUtils.getRankRecord(data);
+            elif match2.group(1).strip() == "刷图推荐":
+                str += "获取图片 #刷图推荐"
+            elif match2.group(1).strip() == "自动rank表":
+                str += "获取图片 #自动rank表"
+            elif match2.group(1).strip() == "手动rank表":
+                str += "获取图片 #手动rank表"
+            elif match2.group(1).strip() == "rank表":
+                str += "获取图片 #rank表"
             else:
                 str = "匹配失败"
-    ### 旧指令
-    # if match2:
-    #     if match2.group(1).strip() == "出刀情况":
-    #         data = PcrUtils.getattactCountByDate(match2.group(2));
-    #         str += PcrUtils.getAttack(data)
-    #     if match2.group(1).strip() == "ai":
-    #         # data = getChat(match2.group(2))
-    #         # str += data;
-    #         str += "暂停服务"
-    #     if match2.group(1).strip() == "公会总表":
-    #         data = PcrUtils.getAllAttactCount();
-    #         str += data
-    #     if match2.group(1).strip() == "帮助":
-    #         str = "帮助文档:"
     return str
+def extract_hashtag_content(text):
+    match = re.search(r"#([\w\u4e00-\u9fff]+)", text.strip())
+    return match.group(1) if match else None  # 如果匹配不到，返回 None
+
 
 class MyClient(botpy.Client):
     async def on_ready(self):
@@ -109,34 +107,45 @@ class MyClient(botpy.Client):
         _log.info({message})
         res = matchCommod(message);
         uploadMedia = None
-        if res.strip() == "获取图片":
+        print(res)
+        ## 图文内容
+        if res.strip().startswith("获取图片"):
+            comd = extract_hashtag_content(res.strip())
             max_attempts = 5
             attempts = 0
             imgName = getRandomImgName();
-            print("文件名", imgName)
+            content = ""
+            url=""
+            if comd is not None:
+                res = getRankImgByTitle(comd)
+                content += res[3]
+                url += res[1]
+            else:
+                url += "http://8.138.16.124:8083/upload/" + imgName
             try:
                 uploadMedia = await message._api.post_group_file(
-                        group_openid=message.group_openid,
-                        file_type=1,  # 文件类型要对应上，具体支持的类型见方法说明
-                    url="http://8.138.16.124:8083/upload/" + imgName,  # 文件Url
-                    )
+                    group_openid=message.group_openid,
+                    file_type=1,  # 文件类型要对应上，具体支持的类型见方法说明
+                    url=url,  # 文件Url
+                )
             except ServerError as e:
-                if uploadMedia is None and attempts < max_attempts :
-                    while(uploadMedia is None ):
+
+                if uploadMedia is None and attempts < max_attempts:
+                    while (uploadMedia is None):
                         uploadMedia = await message._api.post_group_file(
                             group_openid=message.group_openid,
                             file_type=1,  # 文件类型要对应上，具体支持的类型见方法说明
-                            url="http://8.138.16.124:8083/upload/" + imgName,  # 文件Url
+                            url=url,  # 文件Url
                         )
                         if uploadMedia is not None:
                             break  # 如果成功获得 uploadMedia，则跳出循环
             try:
-                print(uploadMedia)
                 await message._api.post_group_message(
                     group_openid=message.group_openid,
                     msg_type=7,
                     msg_id=message.id,
-                    media=uploadMedia
+                    media=uploadMedia,
+                    content=content
                 )
             except Exception:
                 await message._api.post_group_message(
@@ -145,6 +154,7 @@ class MyClient(botpy.Client):
                     msg_id=message.id,
                     content="文件过大或网络异常"
                 )
+        ###文本内容
         else:
             try:
                 await message._api.post_group_message(
@@ -160,28 +170,6 @@ class MyClient(botpy.Client):
                     msg_id=message.id,
                     content="指令错误"
                 )
-        ####新的发送图片的方法
-
-
-        # match = re.match(r"^排名#(.+)", message.content.strip())  # 匹配 "排名#" 开头，且后面必须有内容
-        # if (match):
-        #     data = rank(match.group(1));
-        #     messageResult = await message._api.post_group_message(
-        #         group_openid=message.group_openid,
-        #         msg_type=0,
-        #         msg_id=message.id,
-        #         content=data
-        #     )
-        # if
-        ##回复消息
-        # await message._api.post_group_message(
-        #     group_openid=message.group_openid,
-        #     msg_type=1,  # 7表示富媒体类型
-        #     msg_id=message.id,
-        #     media=message.attachments[0].url
-        # )
-        # message.reply("content:"+message.content +"channel_id"+ message.channel_id+"member"+message.member+"author:"+message.author)
-        # _log.info(messageResult)
 if __name__ == "__main__":
     # 通过预设置的类型，设置需要监听的事件通道
     # intents = botpy.Intents.none()
@@ -193,6 +181,4 @@ if __name__ == "__main__":
     client = MyClient(intents=intents)
     client.run(appid=test_config["appid"], secret=test_config["secret"])
     initDateBase()
-
-
 

@@ -68,16 +68,47 @@ cursor = None
 
 def initConn():
     global conn, cursor  # 声明全局变量
-
     if conn is None:
         conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
+        cursor = conn.cursor()  # 这里需要使用全局的 cursor
 
 def closeConn():
-    global conn, cursor
+    global conn, cursor  # 声明全局变量
     if cursor:
         cursor.close()
         cursor = None
     if conn:
         conn.close()
         conn = None
+
+########## pcrrank表相关sql
+
+def getRankImgByTitle(title):
+    print(title)
+    initConn()
+    cursor.execute("SELECT * FROM pcr_rank_img WHERE title = ?",(title,))
+    result = cursor.fetchone()
+    closeConn()
+    return result
+
+def getRankImgByTitleId(titleId):
+    initConn()
+    cursor.execute("SELECT COUNT(*) FROM pcr_rank_img WHERE title_id = ?",(titleId,))
+    result = cursor.fetchone()
+    closeConn()
+    return result[0]
+
+
+
+def saveRankImg(data):
+    initConn()
+    deleteRankImg()
+    ## 保存新的数据之前先清空之前旧的数据
+    cursor.executemany("insert INTO pcr_rank_img (title,img_url,title_id,web_title) values (?,?,?,?)", (data))
+    # 提交事务
+    conn.commit()
+    # 关闭连接
+    conn.close()
+
+def deleteRankImg():
+    cursor.execute("DELETE FROM pcr_rank_img")
