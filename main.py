@@ -33,6 +33,19 @@ def matchCommod(message: Message):
             str += updateTokenByOpenId(message.group_openid, token)
         elif action == "获取图片":
             str += "获取图片"
+        elif action == "帮助文档":
+            str += ("机器人功能如下:"
+                    "#绑定 用户q群绑定session 如需修改直接重新绑定即可"
+                    "#pcr 使用pcr的功能 对应的功能使用【】括起来 例如#pcr 【出刀情况】 "
+                    "目前开发如下功能"
+                    "出刀情况 查询当前公会出刀的情况 括号内跟要查询的日期"
+                    "公会总表 查询今日出刀信息"
+                    "当前排名 查询当前公会排名"
+                    "今日出刀情况 查询今日出刀情况" 
+                    "今日排名 查询今日公会排名"
+                    "刷图推荐 获取花舞的刷图推荐"
+                    "自动rank表 获取花舞的自动刀的rank表"
+                    "手动rank表 获取花舞的手动刀的rank表")
         else:
             str += "匹配失败"
     ## 获取指令内容
