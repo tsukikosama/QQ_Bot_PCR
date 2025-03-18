@@ -112,3 +112,4 @@ def saveRankImg(data):
 
 def deleteRankImg():
     cursor.execute("DELETE FROM pcr_rank_img")
+    conn.commit()

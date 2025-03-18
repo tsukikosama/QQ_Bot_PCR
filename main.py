@@ -1,3 +1,4 @@
+import json
 import os
 import re
 import botpy
@@ -5,6 +6,7 @@ from botpy import logging
 from botpy.errors import ServerError
 
 from botpy.ext.cog_yaml import read
+from botpy.manage import C2CManageEvent
 
 from Conn import getTokenByOpenId, bindToken, updateTokenByOpenId, initDateBase, getRankImgByTitle
 from FileUtils import file_to_base64
@@ -103,6 +105,30 @@ class MyClient(botpy.Client):
     async def on_ready(self):
         _log.info(f"robot 「{self.robot.name}」 启动成功!")
 
+    # async def on_friend_add(self, event: C2CManageEvent):
+    #     _log.info("用户添加机器人：" + str(event))
+    #     await self.api.post_c2c_message(
+    #         openid=event.openid,
+    #         msg_type=0,
+    #         event_id=event.event_id,
+    #         content="hello",
+    #     )
+    #     print("test")
+    #
+    # async def on_friend_del(self, event: C2CManageEvent):
+    #     _log.info("用户删除机器人：" + str(event))
+    #
+    # async def on_c2c_msg_reject(self, event: C2CManageEvent):
+    #     _log.info("用户关闭机器人主动消息：" + str(event))
+    ### 私信
+    async def on_c2c_message_create(self, event: C2CManageEvent):
+        # _log.info("用户打开机器人主动消息：" + str(event))
+        await self.api.post_c2c_message(
+            openid=event.author.user_openid,
+            msg_type=0,
+            content="hello",
+            msg_id=event.id
+        )
     async def on_group_at_message_create(self, message: Message):
         _log.info({message})
         res = matchCommod(message);
@@ -175,10 +201,8 @@ if __name__ == "__main__":
     # intents = botpy.Intents.none()
     # intents.public_messages=True
     # 通过kwargs，设置需要监听的事件通道
-    db_path = os.path.join(os.path.expanduser("~"), "pcr", "pcr.db")
-    print(db_path)
     intents = botpy.Intents(public_messages=True)
     client = MyClient(intents=intents)
+    client.http.timeout = 30
     client.run(appid=test_config["appid"], secret=test_config["secret"])
-    initDateBase()
 
