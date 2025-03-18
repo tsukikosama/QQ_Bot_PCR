@@ -13,7 +13,7 @@ from FileUtils import file_to_base64
 from ImgUtils import getRandomImgName
 from PcrUtils import rank
 import PcrUtils
-
+from pojo.AiUtils import chatAi, get_session_id
 
 test_config = read(os.path.join(os.path.dirname(__file__), "config.yaml"))
 
@@ -22,7 +22,7 @@ from botpy.message import GroupMessage, Message
 def matchCommod(message: Message):
     text = message.content.strip();
     ## 判断是否是绑定token的指令 如果是 就直接返回 判定和换绑指令
-    pat = r"^#(\S+)(?:【(.*?)】)?$"
+    pat = r"^#(\S+)\s*(?:【(.*?)】)?$"
     ma = re.search(pat, text)
     str = ""
     if ma:
@@ -35,17 +35,20 @@ def matchCommod(message: Message):
             str += "获取图片"
         elif action == "帮助文档":
             str += ("机器人功能如下:"
-                    "#绑定 用户q群绑定session 如需修改直接重新绑定即可"
-                    "#pcr 使用pcr的功能 对应的功能使用【】括起来 例如#pcr 【出刀情况】 "
-                    "目前开发如下功能"
-                    "出刀情况 查询当前公会出刀的情况 括号内跟要查询的日期"
-                    "公会总表 查询今日出刀信息"
-                    "当前排名 查询当前公会排名"
-                    "今日出刀情况 查询今日出刀情况" 
-                    "今日排名 查询今日公会排名"
-                    "刷图推荐 获取花舞的刷图推荐"
-                    "自动rank表 获取花舞的自动刀的rank表"
-                    "手动rank表 获取花舞的手动刀的rank表")
+                    "#绑定 用户q群绑定session 如需修改直接重新绑定即可\n"
+                    "#pcr 使用pcr的功能 对应的功能使用【】括起来 例如#pcr 【出刀情况】\n "
+                    "目前开发如下功能\n"
+                    "出刀情况 查询当前公会出刀的情况 括号内跟要查询的日期\n"
+                    "公会总表 查询今日出刀信息\n"
+                    "当前排名 查询当前公会排名\n"
+                    "今日出刀情况 查询今日出刀情况\n" 
+                    "今日排名 查询今日公会排名\n"
+                    "刷图推荐 获取花舞的刷图推荐\n"
+                    "自动rank表 获取花舞的自动刀的rank表\n"
+                    "手动rank表 获取花舞的手动刀的rank表\n")
+        elif action == "彩星神":
+           print("test")
+           str += chatAi(token,get_session_id())
         else:
             str += "匹配失败"
     ## 获取指令内容
@@ -108,6 +111,7 @@ def matchCommod(message: Message):
                 str += "获取图片 #rank表"
             else:
                 str = "匹配失败"
+
     return str
 def extract_hashtag_content(text):
     match = re.search(r"#([\w\u4e00-\u9fff]+)", text.strip())
@@ -145,8 +149,8 @@ class MyClient(botpy.Client):
     async def on_group_at_message_create(self, message: Message):
         _log.info({message})
         res = matchCommod(message);
+        print(res , "sasdasd")
         uploadMedia = None
-        print(res)
         ## 图文内容
         if res.strip().startswith("获取图片"):
             comd = extract_hashtag_content(res.strip())
@@ -168,7 +172,6 @@ class MyClient(botpy.Client):
                     url=url,  # 文件Url
                 )
             except ServerError as e:
-
                 if uploadMedia is None and attempts < max_attempts:
                     while (uploadMedia is None):
                         uploadMedia = await message._api.post_group_file(
