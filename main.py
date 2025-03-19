@@ -1,6 +1,8 @@
 import json
 import os
 import re
+import uuid
+
 import botpy
 from botpy import logging
 from botpy.errors import ServerError
@@ -14,6 +16,8 @@ from ImgUtils import getRandomImgName
 from PcrUtils import rank
 import PcrUtils
 from pojo.AiUtils import chatAi, get_session_id
+from pojo.ConmmonUtils import generate_unique_id
+from pojo.RedisUtils import clearVluae
 
 test_config = read(os.path.join(os.path.dirname(__file__), "config.yaml"))
 
@@ -48,8 +52,13 @@ def matchCommod(message: Message):
                     "自动rank表 获取花舞的自动刀的rank表\n"
                     "手动rank表 获取花舞的手动刀的rank表\n")
         elif action == "彩星神":
-           ##
-           str += chatAi(token,message.author.member_openid)
+           ##获取uuid5作为唯一的id
+           openid = generate_unique_id(message.author.member_openid , message.group_openid)
+           str += chatAi(token,openid)
+        elif action == '重置机器人':
+            openid = generate_unique_id(message.author.member_openid, message.group_openid)
+            clearVluae()
+            str += "上下文清空成功";
         else:
             str += "匹配失败"
     ## 获取指令内容
@@ -150,7 +159,6 @@ class MyClient(botpy.Client):
     async def on_group_at_message_create(self, message: Message):
         _log.info({message})
         res = matchCommod(message);
-        print(res , "sasdasd")
         uploadMedia = None
         ## 图文内容
         if res.strip().startswith("获取图片"):
