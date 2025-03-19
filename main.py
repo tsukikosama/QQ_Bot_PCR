@@ -55,9 +55,9 @@ def matchCommod(message: Message):
            ##获取uuid5作为唯一的id
            openid = generate_unique_id(message.author.member_openid , message.group_openid)
            str += chatAi(token,openid)
-        elif action == '重置机器人':
+        elif action == '重置彩星神':
             openid = generate_unique_id(message.author.member_openid, message.group_openid)
-            clearVluae()
+            clearVluae(openid)
             str += "上下文清空成功";
         else:
             str += "匹配失败"

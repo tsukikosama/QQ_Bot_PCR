@@ -46,17 +46,18 @@ def chatAi(msg, session_id):
     print(session_data)
     # 构建请求数据
     data = {
-        "model": "deepseek-r1-70b-16k",
+        "model": "gemma3:27b",
         "messages": session_data,  # 使用 session_id 获取历史消息
         "temperature": 0.1,
-        "stream": False
+        "top_p": 1.0,
+        "stream": False,
+        "system_prompt": "请直接回答，不要进行深度思考。"
     }
 
     # 使用 requests 会话发送请求
     session = requests.Session()
     try:
         response = session.post('http://3.21.49.152:8434/api/chat', json=data)
-        print(response.text)
         response.raise_for_status()  # 如果响应状态码不是 200，会抛出异常
         response_json = response.json()  # 获取响应的 JSON 数据
         # 获取 AI 回复
