@@ -20,6 +20,7 @@ test_config = read(os.path.join(os.path.dirname(__file__), "config.yaml"))
 _log = logging.get_logger()
 from botpy.message import GroupMessage, Message
 def matchCommod(message: Message):
+
     text = message.content.strip();
     ## 判断是否是绑定token的指令 如果是 就直接返回 判定和换绑指令
     pat = r"^#(\S+)\s*(?:【(.*?)】)?$"
@@ -47,8 +48,8 @@ def matchCommod(message: Message):
                     "自动rank表 获取花舞的自动刀的rank表\n"
                     "手动rank表 获取花舞的手动刀的rank表\n")
         elif action == "彩星神":
-           print("test")
-           str += chatAi(token,get_session_id())
+           ##
+           str += chatAi(token,message.author.member_openid)
         else:
             str += "匹配失败"
     ## 获取指令内容
