@@ -10,16 +10,16 @@ from botpy.errors import ServerError
 from botpy.ext.cog_yaml import read
 from botpy.manage import C2CManageEvent
 
-from Conn import getTokenByOpenId, bindToken, updateTokenByOpenId, initDateBase, getRankImgByTitle
+from Conn import getTokenByOpenId, bindToken, updateTokenByOpenId, initDateBase, getRankImgByTitle, getBoxIcon
 from FileUtils import file_to_base64
 from ImgUtils import getRandomImgName
 from PcrUtils import rank
 import PcrUtils
-from cmgUtils import getBox_Item
+from cmgUtils import getBox_Item, getHomeWork
 from pojo.AiUtils import chatAi, get_session_id
 from pojo.ConmmonUtils import generate_unique_id
 from pojo.Constant import PRC_RANK_STATUS, QQ_Ai_STATUS, GROUP_USER
-from pojo.MessageUtils import sendTemplate
+from pojo.MessageUtils import sendTemplate, sendGroupMessage
 from pojo.RedisUtils import clearVluae, saveList, isExistValue, removeValueFromList
 
 test_config = read(os.path.join(os.path.dirname(__file__), "config.yaml"))
@@ -229,7 +229,18 @@ class MyClient(botpy.Client):
             if isExistValue(GROUP_USER, message.group_openid) :
                 str = chatAi(message.content.strip(), message.group_openid)
                 await sendTemplate(message, str)
-
+            if isExistValue(PRC_RANK_STATUS, openid):
+                res = getHomeWork(1);
+                urls = getBoxIcon(res)
+                list = []
+                for url in urls:
+                    uploadMedia = await message._api.post_group_file(
+                        group_openid=message.group_openid,
+                        file_type=1,  # 文件类型要对应上，具体支持的类型见方法说明
+                        url=url,  # 文件Url
+                    )
+                    list.append(uploadMedia)
+                sendGroupMessage(message,1,"公会战作业",list)
 def matchCommodV2(message: Message):
     text = message.content.strip();
     pat = r"^#(\S+)\s*(?:【(.*?)】)?$"
@@ -243,6 +254,7 @@ def matchCommodV2(message: Message):
             openid = generate_unique_id(message.author.member_openid, message.group_openid)
             saveList(PRC_RANK_STATUS,openid)
         elif action == "彩星神":
+            print("test")
             saveList(GROUP_USER, message.group_openid)
             str += "开启群回复功能"
         elif action == "关闭彩星神":
@@ -250,10 +262,11 @@ def matchCommodV2(message: Message):
             str += "关闭群回复功能"
         elif action == "重置彩星神":
             clearVluae(message.group_openid)
-            str += "彩星神重启完毕"
+            str += "彩星神重启完毕 需要重新开启彩星神"
         elif action == "获取会战数据":
             getBox_Item()
             str += "保存角色数据完毕"
+
         else:
             str += "匹配失败"
     return str

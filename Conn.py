@@ -119,3 +119,16 @@ def saveBoxItem(data):
     cursor.executemany("INSERT INTO box_item (id, iconValue, iconFilePath) VALUES (:id, :iconValue, :iconFilePath)", data)
     conn.commit()
     conn.close()
+
+def delBox():
+    initConn()
+    cursor.execute("DELETE FROM box_item")
+    conn.commit()
+    conn.close()
+
+def getBoxIcon(ids):
+    initConn()
+    query = "SELECT * FROM box_item WHERE id IN ({})".format(",".join("?" * len(ids)))
+    cursor.execute(query, ids)
+    results = cursor.fetchall()
+    return results;

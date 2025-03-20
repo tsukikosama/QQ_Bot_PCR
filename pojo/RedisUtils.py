@@ -31,7 +31,7 @@ def delFailValue(key):
 
 ### 通过key清除全部的值
 def clearVluae(key):
-    deleted_count = r.delete(QQ_AI_CHAT_CONSTANT+key)
+     r.delete(QQ_AI_CHAT_CONSTANT+key)
 
 ## 判断key中是否包含某个值
 def isExistValueByKey(key,value):

@@ -35,3 +35,17 @@ def getBox_Item():
     jsondata = json.loads(str)
     for item in jsondata.get('data'):
         saveBoxItem(item)
+
+def getHomeWork(stage):
+    response = requests.get(url, params=params, headers=headers)
+    str = urllib.parse.unquote(response.content)
+    jsondata = json.loads(str)
+    for item in jsondata.get('data'):
+        if(item.get('stage') == stage):
+            for work in item.get('homework'):
+                return work.get('unit')[0]
+        # for data in item:
+        #     print(data)
+
+if __name__ == '__main__':
+    getHomeWork(1)
