@@ -113,3 +113,9 @@ def saveRankImg(data):
 def deleteRankImg():
     cursor.execute("DELETE FROM pcr_rank_img")
     conn.commit()
+
+def saveBoxItem(data):
+    initConn()
+    cursor.executemany("INSERT INTO box_item (id, iconValue, iconFilePath) VALUES (:id, :iconValue, :iconFilePath)", data)
+    conn.commit()
+    conn.close()

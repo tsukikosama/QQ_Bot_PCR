@@ -210,3 +210,4 @@ def getTodayRank():
     else:
         str = f"公会战数据为空"
     return str
+

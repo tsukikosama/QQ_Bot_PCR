@@ -35,14 +35,12 @@ def get_session_id():
 session_data = {}
 
 def chatAi(msg, session_id):
-    print(msg)
 
     ##保存本次回复
     saveValueByKey(session_id,{"role": "user", "content": msg})
 
     ## 获取历史回复
     session_data = getValueByKey(session_id)
-
     print(session_data)
     # 构建请求数据
     data = {

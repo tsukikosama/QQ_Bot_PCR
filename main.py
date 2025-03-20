@@ -15,9 +15,12 @@ from FileUtils import file_to_base64
 from ImgUtils import getRandomImgName
 from PcrUtils import rank
 import PcrUtils
+from cmgUtils import getBox_Item
 from pojo.AiUtils import chatAi, get_session_id
 from pojo.ConmmonUtils import generate_unique_id
-from pojo.RedisUtils import clearVluae
+from pojo.Constant import PRC_RANK_STATUS, QQ_Ai_STATUS, GROUP_USER
+from pojo.MessageUtils import sendTemplate
+from pojo.RedisUtils import clearVluae, saveList, isExistValue, removeValueFromList
 
 test_config = read(os.path.join(os.path.dirname(__file__), "config.yaml"))
 
@@ -132,16 +135,15 @@ class MyClient(botpy.Client):
     async def on_ready(self):
         _log.info(f"robot 「{self.robot.name}」 启动成功!")
 
-    # async def on_friend_add(self, event: C2CManageEvent):
-    #     _log.info("用户添加机器人：" + str(event))
-    #     await self.api.post_c2c_message(
-    #         openid=event.openid,
-    #         msg_type=0,
-    #         event_id=event.event_id,
-    #         content="hello",
-    #     )
-    #     print("test")
-    #
+    async def on_friend_add(self, event: C2CManageEvent):
+        _log.info("用户添加机器人：" + str(event))
+
+        await self.api.post_c2c_message(
+            openid=event.openid,
+            msg_type=0,
+            event_id=event.event_id,
+            content="我是彩星喵 一个超级无敌的公主连接公会战查询工具 还有其他的功能请自己探索",
+        )
     # async def on_friend_del(self, event: C2CManageEvent):
     #     _log.info("用户删除机器人：" + str(event))
     #
@@ -149,78 +151,112 @@ class MyClient(botpy.Client):
     #     _log.info("用户关闭机器人主动消息：" + str(event))
     ### 私信
     async def on_c2c_message_create(self, event: C2CManageEvent):
-        # _log.info("用户打开机器人主动消息：" + str(event))
+        str = chatAi(event.content.strip(), event.author.user_openid)
+        # 获取用户的id 然后进行chat回复
         await self.api.post_c2c_message(
             openid=event.author.user_openid,
             msg_type=0,
-            content="hello",
+            content=str,
             msg_id=event.id
         )
+
+    # async def on_group_at_message_create(self, message: Message):
+    #     _log.info({message})
+    #     res = matchCommod(message);
+    #     uploadMedia = None
+    #     ## 图文内容
+    #     if res.strip().startswith("获取图片"):
+    #         comd = extract_hashtag_content(res.strip())
+    #         max_attempts = 5
+    #         attempts = 0
+    #         imgName = getRandomImgName();
+    #         content = ""
+    #         url=""
+    #         if comd is not None:
+    #             res = getRankImgByTitle(comd)
+    #             content += res[3]
+    #             url += res[1]
+    #         else:
+    #             url += "http://8.138.16.124:8083/upload/" + imgName
+    #         uploadMedia = await message._api.post_group_file(
+    #             group_openid=message.group_openid,
+    #             file_type=1,  # 文件类型要对应上，具体支持的类型见方法说明
+    #             url=url,  # 文件Url
+    #         )
+    #         try:
+    #             await message._api.post_group_message(
+    #                 group_openid=message.group_openid,
+    #                 msg_type=7,
+    #                 msg_id=message.id,
+    #                 media=uploadMedia,
+    #                 content=content
+    #             )
+    #         except Exception:
+    #             await message._api.post_group_message(
+    #                 group_openid=message.group_openid,
+    #                 msg_type=0,
+    #                 msg_id=message.id,
+    #                 content="文件过大或网络异常"
+    #             )
+    #     ###文本内容
+    #     else:
+    #         try:
+    #             await message._api.post_group_message(
+    #                 group_openid=message.group_openid,
+    #                 msg_type=0,
+    #                 msg_id=message.id,
+    #                 content=res
+    #             )
+    #         except ServerError as e:
+    #             await message._api.post_group_message(
+    #                 group_openid=message.group_openid,
+    #                 msg_type=0,
+    #                 msg_id=message.id,
+    #                 content="指令错误"
+    #             )
+
     async def on_group_at_message_create(self, message: Message):
         _log.info({message})
-        res = matchCommod(message);
-        uploadMedia = None
-        ## 图文内容
-        if res.strip().startswith("获取图片"):
-            comd = extract_hashtag_content(res.strip())
-            max_attempts = 5
-            attempts = 0
-            imgName = getRandomImgName();
-            content = ""
-            url=""
-            if comd is not None:
-                res = getRankImgByTitle(comd)
-                content += res[3]
-                url += res[1]
-            else:
-                url += "http://8.138.16.124:8083/upload/" + imgName
-            try:
-                uploadMedia = await message._api.post_group_file(
-                    group_openid=message.group_openid,
-                    file_type=1,  # 文件类型要对应上，具体支持的类型见方法说明
-                    url=url,  # 文件Url
-                )
-            except ServerError as e:
-                if uploadMedia is None and attempts < max_attempts:
-                    while (uploadMedia is None):
-                        uploadMedia = await message._api.post_group_file(
-                            group_openid=message.group_openid,
-                            file_type=1,  # 文件类型要对应上，具体支持的类型见方法说明
-                            url=url,  # 文件Url
-                        )
-                        if uploadMedia is not None:
-                            break  # 如果成功获得 uploadMedia，则跳出循环
-            try:
-                await message._api.post_group_message(
-                    group_openid=message.group_openid,
-                    msg_type=7,
-                    msg_id=message.id,
-                    media=uploadMedia,
-                    content=content
-                )
-            except Exception:
-                await message._api.post_group_message(
-                    group_openid=message.group_openid,
-                    msg_type=0,
-                    msg_id=message.id,
-                    content="文件过大或网络异常"
-                )
-        ###文本内容
+        str = matchCommodV2(message);
+        openid = generate_unique_id(message.author.member_openid, message.group_openid)
+        text = message.content.strip();
+        pat = r"^#(\S+)\s*(?:【(.*?)】)?$"
+        ma = re.search(pat, text)
+        if ma:
+            await sendTemplate(message, str)
         else:
-            try:
-                await message._api.post_group_message(
-                    group_openid=message.group_openid,
-                    msg_type=0,
-                    msg_id=message.id,
-                    content=res
-                )
-            except ServerError as e:
-                await message._api.post_group_message(
-                    group_openid=message.group_openid,
-                    msg_type=0,
-                    msg_id=message.id,
-                    content="指令错误"
-                )
+            ## 判断用户启用了哪种状态
+            if isExistValue(GROUP_USER, message.group_openid) :
+                str = chatAi(message.content.strip(), message.group_openid)
+                await sendTemplate(message, str)
+
+def matchCommodV2(message: Message):
+    text = message.content.strip();
+    pat = r"^#(\S+)\s*(?:【(.*?)】)?$"
+    ma = re.search(pat, text)
+    str = ""
+    if ma:
+        action, token = ma.groups()
+        if action == "绑定":
+            str += bindToken(message.group_openid, token)
+        elif action == "公主连接":
+            openid = generate_unique_id(message.author.member_openid, message.group_openid)
+            saveList(PRC_RANK_STATUS,openid)
+        elif action == "彩星神":
+            saveList(GROUP_USER, message.group_openid)
+            str += "开启群回复功能"
+        elif action == "关闭彩星神":
+            removeValueFromList(GROUP_USER,message.group_openid)
+            str += "关闭群回复功能"
+        elif action == "重置彩星神":
+            clearVluae(message.group_openid)
+            str += "彩星神重启完毕"
+        elif action == "获取会战数据":
+            getBox_Item()
+            str += "保存角色数据完毕"
+        else:
+            str += "匹配失败"
+    return str
 if __name__ == "__main__":
     # 通过预设置的类型，设置需要监听的事件通道
     # intents = botpy.Intents.none()
@@ -230,4 +266,6 @@ if __name__ == "__main__":
     client = MyClient(intents=intents)
     client.http.timeout = 30
     client.run(appid=test_config["appid"], secret=test_config["secret"])
+
+
 
