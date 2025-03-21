@@ -13,7 +13,7 @@ from botpy.ext.cog_yaml import read
 from botpy.manage import C2CManageEvent
 
 from Conn import getTokenByOpenId, bindToken, updateTokenByOpenId, initDateBase, getRankImgByTitle, getBoxIcon
-from FileUtils import file_to_base64
+from FileUtils import file_to_base64, base64_to_file
 from ImgUtils import getRandomImgName
 from PcrUtils import rank
 import PcrUtils
@@ -254,13 +254,15 @@ class MyClient(botpy.Client):
                 if any(keyword in message.content for keyword in keywords):
                     res = getRankImgByTitle(message.content.strip())
                     content = res[3]
-                    url = "C:\\Users\\Administrator\\Desktop\\46120babc889054ae976330638a0cb0c549739.JPEG"
+                    url = "C:\\Users\\Administrator\\Desktop\\D1CB32994EF230C4F588391E292CDEF3.jpg"
                     base = file_to_base64(url);
+                    base64_to_file(base, "C:\\Users\\Administrator\\Desktop\\test.jpg")
                     uploadMedia = await message._api.post_group_filebase64(
                         group_openid=message.group_openid,
                         file_type=1,  # 文件类型要对应上，具体支持的类型见方法说明
-                        data="data:image/png;base64"+base,  # 文件Url
+                        data="data:image/jpg;base64"+base,  # 文件Url
                     )
+
                     await message._api.post_group_message(
                                         group_openid=message.group_openid,
                                         msg_type=7,
