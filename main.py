@@ -267,7 +267,6 @@ class MyClient(botpy.Client):
                     )
                     return
                 await sendTemplate(message, str)
-
                 # res = getHomeWork(1);
                 # urls = getBoxIcon(res)
                 # print(urls)
