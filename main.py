@@ -42,18 +42,7 @@ def matchCommod(message: Message):
         elif action == "获取图片":
             str += "获取图片"
         elif action == "帮助文档":
-            str += ("机器人功能如下:"
-                    "#绑定 用户q群绑定session 如需修改直接重新绑定即可\n"
-                    "#pcr 使用pcr的功能 对应的功能使用【】括起来 例如#pcr 【出刀情况】\n "
-                    "目前开发如下功能\n"
-                    "出刀情况 查询当前公会出刀的情况 括号内跟要查询的日期\n"
-                    "公会总表 查询今日出刀信息\n"
-                    "当前排名 查询当前公会排名\n"
-                    "今日出刀情况 查询今日出刀情况\n" 
-                    "今日排名 查询今日公会排名\n"
-                    "刷图推荐 获取花舞的刷图推荐\n"
-                    "自动rank表 获取花舞的自动刀的rank表\n"
-                    "手动rank表 获取花舞的手动刀的rank表\n")
+            str += ""
         elif action == "彩星神":
            ##获取uuid5作为唯一的id
            openid = generate_unique_id(message.author.member_openid , message.group_openid)
@@ -62,6 +51,10 @@ def matchCommod(message: Message):
             openid = generate_unique_id(message.author.member_openid, message.group_openid)
             clearVluae(openid)
             str += "上下文清空成功";
+        elif action == "关闭功能":
+            openid = generate_unique_id(message.author.member_openid, message.group_openid)
+
+            str += "功能关闭成功,需要使用请重新开启";
         else:
             str += "匹配失败"
     ## 获取指令内容
@@ -94,6 +87,7 @@ def matchCommod(message: Message):
             str += "当前群未绑定token,请重新绑定token后再使用功能"
         else:
             PcrUtils.changeToken(message.author.member_openid)
+
             ### 出刀情况 【日期】
             if match2.group(1).strip() == "出刀情况":
                 data = PcrUtils.getattactCountByDate(match2.group(3));
@@ -222,6 +216,7 @@ class MyClient(botpy.Client):
         text = message.content.strip();
         pat = r"^#(\S+)\s*(?:【(.*?)】)?$"
         ma = re.search(pat, text)
+        keywords = ["刷图推荐", "自动rank表", "手动rank表","rank表"]
         if ma:
             await sendTemplate(message, str)
         else:
@@ -229,18 +224,62 @@ class MyClient(botpy.Client):
             if isExistValue(GROUP_USER, message.group_openid) :
                 str = chatAi(message.content.strip(), message.group_openid)
                 await sendTemplate(message, str)
-            if isExistValue(PRC_RANK_STATUS, openid):
-                res = getHomeWork(1);
-                urls = getBoxIcon(res)
-                list = []
-                for url in urls:
+            if isExistValue(PRC_RANK_STATUS, message.group_openid):
+                PcrUtils.getToken(message.group_openid);
+                if "出刀情况" in message.content:
+                    pattern = r"\d{4}-\d{2}-\d{2}"
+                    re.findall(pattern, message.content)
+                    match = re.search(pattern, message.content)
+                    data = PcrUtils.getattactCountByDate(match.group(0));
+                    str += PcrUtils.getAttack(data)
+                if "公会总表" in message.content:
+                    data = PcrUtils.getAllAttactCount();
+                    result = []
+                    for entry in data.get('data'):
+                        result.append(
+                            f"成员:{entry['username']} 出刀数:{entry['number']} 伤害:{entry['damage']}")
+                    # 输出所有格式化后的字符串
+                    str = "\n".join(result)
+                if "当前排名" in message.content:
+                    parts = text.split("当前排名")
+                    data = rank(parts[1].strip())
+                    str += PcrUtils.getRankRecord(data);
+                if "今日出刀" in message.content:
+                    data = PcrUtils.attactCount();
+                    str += PcrUtils.getAttack(data);
+                if "今日排名" in message.content:
+                    str += PcrUtils.getTodayRank();
+                if any(keyword in message.content for keyword in keywords):
+                    res = getRankImgByTitle(message.content.strip())
+                    content = res[3]
+                    url = res[1]
                     uploadMedia = await message._api.post_group_file(
                         group_openid=message.group_openid,
                         file_type=1,  # 文件类型要对应上，具体支持的类型见方法说明
                         url=url,  # 文件Url
                     )
-                    list.append(uploadMedia)
-                sendGroupMessage(message,1,"公会战作业",list)
+                    await message._api.post_group_message(
+                                        group_openid=message.group_openid,
+                                        msg_type=7,
+                                        msg_id=message.id,
+                                        media=uploadMedia,
+                                        content=content
+                    )
+                    return
+                await sendTemplate(message, str)
+
+                # res = getHomeWork(1);
+                # urls = getBoxIcon(res)
+                # print(urls)
+                # list = []
+                # for url in urls:
+                #     uploadMedia = await message._api.post_group_file(
+                #         group_openid=message.group_openid,
+                #         file_type=1,  # 文件类型要对应上，具体支持的类型见方法说明
+                #         url=url,  # 文件Url
+                #     )
+                #     list.append(uploadMedia)
+                # await sendGroupMessage(message,1,"公会战作业",list)
 def matchCommodV2(message: Message):
     text = message.content.strip();
     pat = r"^#(\S+)\s*(?:【(.*?)】)?$"
@@ -251,10 +290,12 @@ def matchCommodV2(message: Message):
         if action == "绑定":
             str += bindToken(message.group_openid, token)
         elif action == "公主连接":
-            openid = generate_unique_id(message.author.member_openid, message.group_openid)
-            saveList(PRC_RANK_STATUS,openid)
+            saveList(PRC_RANK_STATUS,message.group_openid)
+            str += "开启公主连接功能"
+        elif action == "关闭公主连接":
+            removeValueFromList(PRC_RANK_STATUS,message.group_openid)
+            str += "关闭公主连接功能"
         elif action == "彩星神":
-            print("test")
             saveList(GROUP_USER, message.group_openid)
             str += "开启群回复功能"
         elif action == "关闭彩星神":

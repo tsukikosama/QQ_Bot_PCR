@@ -17,11 +17,9 @@ import Conn
     基本的request请求封装了一些必要的参数
 """
 
-
 pcrconfig = os.path.join(os.path.dirname(__file__), 'pcrconfig.yaml')
 
 _log = logging.getLogger(__name__)
-
 
 token = None
 
@@ -45,12 +43,12 @@ class BaseRequest:
             "appkey":self.appkey,
             "sign":self.sign,
         }
-        s = token if token else "buvid3=3673CF0A-1082-6586-C4D6-C6058E39402200310infoc; b_nut=1709792100; _uuid=347D9A24-1AB4-4BEE-B7F7-CFF445DB101010B00392infoc; buvid_fp=3673CF0A-1082-6586-C4D6-C6058E39402200310infoc; buvid4=515D5D26-EDE2-A54D-6A1B-FC5F2DAD287501662-024030706-ldQSR%2BULMIQ6oJCY2Ms1KA%3D%3D; enable_web_push=DISABLE; FEED_LIVE_VERSION=V8; header_theme_version=CLOSE; home_feed_column=4; browser_resolution=450-649; CURRENT_FNVAL=4048; rpdid=|(m~RYRmluk0J'u~u)klm|l~; fingerprint=b701a029553ff3fa8fe52430954ca203; b_lsid=8A72533A_194DE6C0E93; buvid_fp_plain=undefined; SESSDATA=94bf7c9f%2C1754450457%2Cc0849%2A22CjDKOcV9hqXz7xyq9UU9i2FpmNPprTNa-OiPiz-t-bZANMKlDSJcTGmUw2dP3cXDxUQSVnBfR2VXM00tMmF6SkVBQUg4ZEl3WDZwZUFYYzNhSGRaZjBKY3hjbjRCUXhkaXQ3Ml9BbmY2UU5LZE5EbUZfVGVGLXVaeGtWMl9qamRabGVLQ2hvM05nIIEC; bili_jct=e0ef0693192fc5d4cf3da986243c50c2; DedeUserID=361428452; DedeUserID__ckMd5=531d4a820c52d3f6; sid=gdwt2a9y"
+        # s = token if token else "buvid3=3673CF0A-1082-6586-C4D6-C6058E39402200310infoc; b_nut=1709792100; _uuid=347D9A24-1AB4-4BEE-B7F7-CFF445DB101010B00392infoc; buvid_fp=3673CF0A-1082-6586-C4D6-C6058E39402200310infoc; buvid4=515D5D26-EDE2-A54D-6A1B-FC5F2DAD287501662-024030706-ldQSR%2BULMIQ6oJCY2Ms1KA%3D%3D; enable_web_push=DISABLE; FEED_LIVE_VERSION=V8; header_theme_version=CLOSE; home_feed_column=4; browser_resolution=450-649; CURRENT_FNVAL=4048; rpdid=|(m~RYRmluk0J'u~u)klm|l~; fingerprint=b701a029553ff3fa8fe52430954ca203; b_lsid=8A72533A_194DE6C0E93; buvid_fp_plain=undefined; SESSDATA=94bf7c9f%2C1754450457%2Cc0849%2A22CjDKOcV9hqXz7xyq9UU9i2FpmNPprTNa-OiPiz-t-bZANMKlDSJcTGmUw2dP3cXDxUQSVnBfR2VXM00tMmF6SkVBQUg4ZEl3WDZwZUFYYzNhSGRaZjBKY3hjbjRCUXhkaXQ3Ml9BbmY2UU5LZE5EbUZfVGVGLXVaeGtWMl9qamRabGVLQ2hvM05nIIEC; bili_jct=e0ef0693192fc5d4cf3da986243c50c2; DedeUserID=361428452; DedeUserID__ckMd5=531d4a820c52d3f6; sid=gdwt2a9y"
         ## 通过数据库来查询token
         self.headers = {
             "User-Agent":'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0',
             'Connection':'keep-alive',
-            "Cookie": s,
+            "Cookie": token,
             "Bili-Status-Code":"0",
             "X-Bili-Trace-Id":'1b72650df6ab5d64211db1174066b185',
             'X-Ticket-Status':'1',
@@ -59,13 +57,16 @@ class BaseRequest:
         }
     def fetch_data(self):
         session = requests.Session()
+        print(self.headers)
         r = session.get('https://api.game.bilibili.com/game/player/tools/pcr/search_clan', headers=self.headers,
                             params=self.params, allow_redirects=True)
+
         # 尝试使用 utf-8 解码
         decoded_data = r.content.decode('utf-8', errors='replace')
         # 尝试解析为 JSON
         json_data = json.loads(decoded_data)
         return json_data
+
 
 
 ####发送api的方法
@@ -85,8 +86,6 @@ def sendApi(url,param):
                     params=params)
     decoded_data = r.content.decode('utf-8', errors='replace')
     json_data = json.loads(decoded_data)
-    print("url",r.url)
-    print("内容", json_data.get('data'))
     if(json_data.get('code') != 0):
         return 500;
     return json_data.get('data');
@@ -94,8 +93,10 @@ def sendApi(url,param):
 def changeToken(openId):
     global token
     token = Conn.getTokenByOpenId(openId);
-
-
+##根据群id获取对应的token
+def getToken(openId):
+    global token
+    token = str(Conn.getTokenByOpenId(openId))
 ###搜索公会排名
 def rank(name):
     params = {"name": name}
@@ -110,10 +111,8 @@ def sign(params):
     # 计算 MD5 签名
     sign = hashlib.md5(sign_string.encode('utf-8')).hexdigest()
     return sign
-
 ## 设置如果时间在0-5点之内就返回上一天的时间
 def getData():
-
     current_time = datetime.now()
     today_date = datetime.today().date()
     if 0 <= current_time.hour < 5:
@@ -140,7 +139,6 @@ def getattactCountByDate(data):
 ### 获取战斗id
 def getBattleId():
     ids =  sendApi("https://api.game.bilibili.com/game/player/tools/pcr/clan_battle_list",{})
-    print(ids[0])
     return ids[0].get('id');
 
 

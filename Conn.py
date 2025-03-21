@@ -45,7 +45,6 @@ def getTokenByOpenId(openId):
     initConn();
     cursor.execute("SELECT token FROM user_tokens WHERE openid = ?", (openId,))
     result = cursor.fetchone()
-
     conn.commit()
     closeConn()
     return result
@@ -71,6 +70,8 @@ def initConn():
     if conn is None:
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()  # 这里需要使用全局的 cursor
+        ## 获取到了之后更新cookie
+
 
 def closeConn():
     global conn, cursor  # 声明全局变量
@@ -84,7 +85,7 @@ def closeConn():
 ########## pcrrank表相关sql
 
 def getRankImgByTitle(title):
-    print(title)
+
     initConn()
     cursor.execute("SELECT * FROM pcr_rank_img WHERE title = ?",(title,))
     result = cursor.fetchone()
@@ -128,6 +129,8 @@ def delBox():
 
 def getBoxIcon(ids):
     initConn()
+    if isinstance(ids, int):  # 确保 ids 是一个列表
+        ids = [ids]
     query = "SELECT * FROM box_item WHERE id IN ({})".format(",".join("?" * len(ids)))
     cursor.execute(query, ids)
     results = cursor.fetchall()
