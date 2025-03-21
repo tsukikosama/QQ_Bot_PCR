@@ -1,9 +1,11 @@
+import base64
 import json
 import os
 import re
 import uuid
 
 import botpy
+from PIL import Image
 from botpy import logging
 from botpy.errors import ServerError
 
@@ -252,11 +254,12 @@ class MyClient(botpy.Client):
                 if any(keyword in message.content for keyword in keywords):
                     res = getRankImgByTitle(message.content.strip())
                     content = res[3]
-                    url = res[1]
-                    uploadMedia = await message._api.post_group_file(
+                    url = "C:\\Users\\Administrator\\Desktop\\46120babc889054ae976330638a0cb0c549739.JPEG"
+                    base = file_to_base64(url);
+                    uploadMedia = await message._api.post_group_filebase64(
                         group_openid=message.group_openid,
                         file_type=1,  # 文件类型要对应上，具体支持的类型见方法说明
-                        url=url,  # 文件Url
+                        data="data:image/png;base64"+base,  # 文件Url
                     )
                     await message._api.post_group_message(
                                         group_openid=message.group_openid,

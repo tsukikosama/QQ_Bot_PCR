@@ -48,3 +48,5 @@ def download_image_to_jpg(url):
         logging.info("图片下载失败",url)
     ## 返回图片访问路径
     return view_url+filename;
+
+
