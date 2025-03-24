@@ -254,13 +254,12 @@ class MyClient(botpy.Client):
                 if any(keyword in message.content for keyword in keywords):
                     res = getRankImgByTitle(message.content.strip())
                     content = res[3]
-                    url = "C:\\Users\\Administrator\\Desktop\\D1CB32994EF230C4F588391E292CDEF3.jpg"
-                    base = file_to_base64(url);
-                    base64_to_file(base, "C:\\Users\\Administrator\\Desktop\\test.jpg")
+                    url = res[1]
+
                     uploadMedia = await message._api.post_group_filebase64(
                         group_openid=message.group_openid,
                         file_type=1,  # 文件类型要对应上，具体支持的类型见方法说明
-                        data="data:image/jpg;base64"+base,  # 文件Url
+                        data=url,  # 文件Url
                     )
 
                     await message._api.post_group_message(
