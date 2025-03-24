@@ -117,9 +117,9 @@ def deleteRankImg():
 
 def saveBoxItem(data):
     initConn()
-    cursor.executemany("INSERT INTO box_item (id, iconValue, iconFilePath) VALUES (:id, :iconValue, :iconFilePath)", data)
+    cursor.executemany("INSERT OR REPLACE INTO box_item (id, iconValue, iconFilePath) VALUES (:id, :iconValue, :iconFilePath)", data)
     conn.commit()
-    conn.close()
+
 
 def delBox():
     initConn()
@@ -135,3 +135,22 @@ def getBoxIcon(ids):
     cursor.execute(query, ids)
     results = cursor.fetchall()
     return results;
+
+
+def getHomeWorkName(ids):
+
+    initConn()
+    if isinstance(ids, int):  # 确保 ids 是一个列表
+        ids = [ids]
+    query = "SELECT iconValue FROM box_item WHERE id IN ({})".format(",".join("?" * len(ids)))
+    cursor.execute(query, ids)
+    results = cursor.fetchall()
+    return results;
+
+def getBossInfo():
+    initConn()
+    query = "SELECT * FROM box_item WHERE id  < 100"
+    cursor.execute(query)
+    results = cursor.fetchall()
+    print(results)
+    return results

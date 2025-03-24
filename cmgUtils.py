@@ -1,9 +1,10 @@
 import json
+import re
 import urllib
 
 import requests
 
-from Conn import saveBoxItem
+from Conn import saveBoxItem, getHomeWorkName, getBossInfo
 
 params = {
     'date': '2025-02',
@@ -36,16 +37,61 @@ def getBox_Item():
     for item in jsondata.get('data'):
         saveBoxItem(item)
 
-def getHomeWork(stage):
+def getHomeWork(stage,id,flag):
     response = requests.get(url, params=params, headers=headers)
-    str = urllib.parse.unquote(response.content)
-    jsondata = json.loads(str)
+    arr = []
+    strs = urllib.parse.unquote(response.content)
+    jsondata = json.loads(strs)
     for item in jsondata.get('data'):
-        if(item.get('stage') == stage):
-            for work in item.get('homework'):
-                return work.get('unit')[0]
+        if item.get('id') == str(id):
+            for items in item.get('homework'):
+                print(items)
+                if(item.get('stage') == int(stage) and items.get('auto') == int(flag) ):
+                    role = getHomeWorkName(items.get('unit'))
+                    damage = items.get('damage')
+                    for sp in items.get('video'):
+                        title = sp.get('text')
+                        urls = sp.get('url')
+                        remain=''
+                        if(items.get('remain') == 1):
+                            remain='--(尾刀)'
+                        arr.append({
+                            'id':items.get('id'),
+                            'role': role,
+                            'damage': damage,
+                            'title': title,
+                            'url': urls,
+                            'stage':stage,
+                            'remain':remain
+                        })
+    print(arr)
+    return arr
+
+def getUrlByID(id):
+    print(id)
+    response = requests.get(url, params=params, headers=headers)
+    arr = []
+    strs = urllib.parse.unquote(response.content)
+    jsondata = json.loads(strs)
+    for item in jsondata.get('data'):
+        for items in item.get('homework'):
+            if(items.get('id')== int(id)):
+                result = items.get('video')[0].get('url').split("www.bilibili.com/")[-1]
+    print(result)
+    return result;
         # for data in item:
         #     print(data)
-
+def get_sn_type(sn):
+    """判断 sn 是 'et'、'ew' 还是 'e' 类型"""
+    if sn.startswith("et"):
+        return 1
+    elif sn.startswith("ew"):
+        return 2
+    elif sn.startswith("e"):
+        return 3
+    else:
+        return "未知类型"
 if __name__ == '__main__':
-    getHomeWork(1)
+    s = getUrlByID(23098)
+    print(s)
+    # getBox_Item()

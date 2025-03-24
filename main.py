@@ -12,12 +12,13 @@ from botpy.errors import ServerError
 from botpy.ext.cog_yaml import read
 from botpy.manage import C2CManageEvent
 
-from Conn import getTokenByOpenId, bindToken, updateTokenByOpenId, initDateBase, getRankImgByTitle, getBoxIcon
+from Conn import getTokenByOpenId, bindToken, updateTokenByOpenId, initDateBase, getRankImgByTitle, getBoxIcon, \
+    getBossInfo
 from FileUtils import file_to_base64, base64_to_file
 from ImgUtils import getRandomImgName
 from PcrUtils import rank
 import PcrUtils
-from cmgUtils import getBox_Item, getHomeWork
+from cmgUtils import getBox_Item, getHomeWork, getUrlByID
 from pojo.AiUtils import chatAi, get_session_id
 from pojo.ConmmonUtils import generate_unique_id
 from pojo.Constant import PRC_RANK_STATUS, QQ_Ai_STATUS, GROUP_USER
@@ -55,7 +56,6 @@ def matchCommod(message: Message):
             str += "上下文清空成功";
         elif action == "关闭功能":
             openid = generate_unique_id(message.author.member_openid, message.group_openid)
-
             str += "功能关闭成功,需要使用请重新开启";
         else:
             str += "匹配失败"
@@ -211,21 +211,22 @@ class MyClient(botpy.Client):
     #                 content="指令错误"
     #             )
 
+
     async def on_group_at_message_create(self, message: Message):
         _log.info({message})
-        str = matchCommodV2(message);
+        strs = matchCommodV2(message);
         openid = generate_unique_id(message.author.member_openid, message.group_openid)
         text = message.content.strip();
         pat = r"^#(\S+)\s*(?:【(.*?)】)?$"
         ma = re.search(pat, text)
         keywords = ["刷图推荐", "自动rank表", "手动rank表","rank表"]
         if ma:
-            await sendTemplate(message, str)
+            await sendTemplate(message, strs)
         else:
             ## 判断用户启用了哪种状态
             if isExistValue(GROUP_USER, message.group_openid) :
-                str = chatAi(message.content.strip(), message.group_openid)
-                await sendTemplate(message, str)
+                strs = chatAi(message.content.strip(), message.group_openid)
+                await sendTemplate(message, strs)
             if isExistValue(PRC_RANK_STATUS, message.group_openid):
                 PcrUtils.getToken(message.group_openid);
                 if "出刀情况" in message.content:
@@ -233,7 +234,7 @@ class MyClient(botpy.Client):
                     re.findall(pattern, message.content)
                     match = re.search(pattern, message.content)
                     data = PcrUtils.getattactCountByDate(match.group(0));
-                    str += PcrUtils.getAttack(data)
+                    strs += PcrUtils.getAttack(data)
                 if "公会总表" in message.content:
                     data = PcrUtils.getAllAttactCount();
                     result = []
@@ -241,25 +242,45 @@ class MyClient(botpy.Client):
                         result.append(
                             f"成员:{entry['username']} 出刀数:{entry['number']} 伤害:{entry['damage']}")
                     # 输出所有格式化后的字符串
-                    str = "\n".join(result)
+                    strs = "\n".join(result)
                 if "当前排名" in message.content:
                     parts = text.split("当前排名")
                     data = rank(parts[1].strip())
-                    str += PcrUtils.getRankRecord(data);
+                    strs += PcrUtils.getRankRecord(data);
                 if "今日出刀" in message.content:
                     data = PcrUtils.attactCount();
-                    str += PcrUtils.getAttack(data);
+                    strs += PcrUtils.getAttack(data);
                 if "今日排名" in message.content:
-                    str += PcrUtils.getTodayRank();
+                    strs += PcrUtils.getTodayRank();
+                if "作业" in message.content:
+                    parts = text.split("作业")
+
+                    numbers = re.findall(r'\d+', parts[1].strip())  # 提取所有数字
+                    list = getHomeWork(numbers[0],numbers[1],numbers[2])
+                    for item in list :
+                        temp = f"作业编号:{item.get('id')} 标题:{item.get('title')}\n角色:"
+                        role_str = ' '.join(' '.join(role) for role in item.get('role'))
+                        temp += role_str
+                        temp += f"伤害 {item.get('damage')}"
+                        temp += f"{item.get('remain')}"
+                        strs += "\n" + temp
+                if "视频" in message.content:
+                    parts = text.strip().split("视频")
+                    strs += getUrlByID(parts[1].strip());
+                    # strs = "".join(f"\n 标题:{item.get('title')} 角色:{', '.join(map(str, item.get('role', [])))} 伤害:{item.get('damage')} " for item in list)
+                    # strs = "毛二力"
+                    # strs = "https://221.15.71.66/video/BV15sAWeREAY?t=22.1"
+                if "boss信息" in message.content:
+                    list = getBossInfo()
+                    strs = "".join(f"\n boss编号:{item[0]} boss名称:{item[2].strip()}" for item in list if item[2].strip());
                 if any(keyword in message.content for keyword in keywords):
                     res = getRankImgByTitle(message.content.strip())
                     content = res[3]
                     url = res[1]
-
-                    uploadMedia = await message._api.post_group_filebase64(
+                    uploadMedia = await message._api.post_group_file(
                         group_openid=message.group_openid,
                         file_type=1,  # 文件类型要对应上，具体支持的类型见方法说明
-                        data=url,  # 文件Url
+                        url=url,  # 文件Url
                     )
 
                     await message._api.post_group_message(
@@ -270,19 +291,8 @@ class MyClient(botpy.Client):
                                         content=content
                     )
                     return
-                await sendTemplate(message, str)
-                # res = getHomeWork(1);
-                # urls = getBoxIcon(res)
-                # print(urls)
-                # list = []
-                # for url in urls:
-                #     uploadMedia = await message._api.post_group_file(
-                #         group_openid=message.group_openid,
-                #         file_type=1,  # 文件类型要对应上，具体支持的类型见方法说明
-                #         url=url,  # 文件Url
-                #     )
-                #     list.append(uploadMedia)
-                # await sendGroupMessage(message,1,"公会战作业",list)
+                await sendTemplate(message, strs)
+
 def matchCommodV2(message: Message):
     text = message.content.strip();
     pat = r"^#(\S+)\s*(?:【(.*?)】)?$"
@@ -310,7 +320,9 @@ def matchCommodV2(message: Message):
         elif action == "获取会战数据":
             getBox_Item()
             str += "保存角色数据完毕"
-
+        elif action == "pdf":
+            getPdf(1)
+            str += "获取pdf成功"
         else:
             str += "匹配失败"
     return str
