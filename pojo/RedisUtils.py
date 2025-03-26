@@ -5,7 +5,7 @@ from pojo.Constant import  QQ_AI_CHAT_CONSTANT, QQ_Ai_STATUS
 
 r = redis.Redis(host='8.138.16.124', port=6379,password='2270398619', decode_responses=True)
 ## redis key 有效时间 一个小时
-VALID_TIME = 60 * 60 * 24
+VALID_TIME = 60 * 60 * 24 * 7
 
 ## 通过key来获取对应的value
 def getValueByKey(key):

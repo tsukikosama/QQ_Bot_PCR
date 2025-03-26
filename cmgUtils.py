@@ -8,7 +8,6 @@ import requests
 from Conn import saveBoxItem, getHomeWorkName, getBossInfo, clearBossInfo
 
 params = {
-
     'lang': 'zh-cn',
     'region': 'cn'  # 可能有效
 }
@@ -65,7 +64,6 @@ def getHomeWork(stage,id,flag):
                             'stage':stage,
                             'remain':remain
                         })
-    print(arr)
     return arr
 
 def getUrlByID(id):

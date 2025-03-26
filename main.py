@@ -231,6 +231,17 @@ class MyClient(botpy.Client):
                 await sendTemplate(message, strs)
             if isExistValue(PRC_RANK_STATUS, message.group_openid):
                 PcrUtils.getToken(message.group_openid);
+                if "help" in message.content:
+                    strs += ("\n*******公主连接功能功能介绍*******\n"
+                             "①出刀情况 输入公会战日期来查询出刀情况 例如 出刀情况 2025-02-22 \n"
+                             "②工会总表 查看公会成员的出刀数\n"
+                             "③当前排名 查看公会的当前排名 例如 当前排名 咖啡馆 \n"
+                             "④今日出刀 查看公会今日的出刀情况 \n"
+                             "⑤今日排名 查询公会今日五点的排名情况 \n"
+                             "⑥作业 查看对应的boss作业 例如 作业 1-5 36 1|2  1-5表示abcde 36表示boss编号 可以用boss查询到boss编号 1代表auto刀2表示手动刀\n"
+                             "⑥视频 查看对应的boss作业的视频 例如 作业 25452-1 这个编号可以从作业功能中获取\n"
+                             "⑦boss信息 获取当期的boss信息\n"
+                             "⑧刷图推荐|自动rank表|手动rank表 可以获取花舞组当期的刷图推荐|自动rank表|手动rank表")
                 if "出刀情况" in message.content:
                     pattern = r"\d{4}-\d{2}-\d{2}"
                     re.findall(pattern, message.content)
@@ -264,7 +275,7 @@ class MyClient(botpy.Client):
                         temp += role_str
                         temp += f"伤害 {item.get('damage')}"
                         temp += f"{item.get('remain')}"
-                        strs += "\n" + temp
+                        strs += "\n" + temp + "\n"
                 if "视频" in message.content:
                     parts = text.strip().split("视频")
                     strs += getUrlByID(parts[1].strip());
@@ -291,6 +302,7 @@ class MyClient(botpy.Client):
                         content=content
                     )
                     return
+
                 await sendTemplate(message, strs)
 def matchCommodV2(message: Message):
     text = message.content.strip();

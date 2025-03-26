@@ -73,7 +73,6 @@ class BaseRequest:
 def sendApi(url,param):
     session = requests.Session()
     base = BaseRequest()
-
     params = {
         "ts": int(time.time() * 1000),
         "nonce": str(uuid.uuid4()),
@@ -82,6 +81,7 @@ def sendApi(url,param):
     params.update(param)
     # print(params)
     params["sign"] = sign(params)
+    print(params)
     r = session.get(url, headers=base.headers,
                     params=params)
     decoded_data = r.content.decode('utf-8', errors='replace')
@@ -166,13 +166,12 @@ def getAllAttactCount():
     params = {
     }
     data = sendApi("https://api.game.bilibili.com/game/player/tools/pcr/clan_collect_report",params)
-    print(data)
     return data;
 
 ## 获取出刀内容
 def getAttack(data):
     if data == [] or data == None:
-        return "公会战还未开启，查询失败"
+        return "公会战还未开启 或者公会暂无数据"
     str = "";
     killTotal = 0;
     reimburseTotal = 0
