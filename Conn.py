@@ -152,5 +152,11 @@ def getBossInfo():
     query = "SELECT * FROM box_item WHERE id  < 100"
     cursor.execute(query)
     results = cursor.fetchall()
-    print(results)
     return results
+
+def clearBossInfo():
+    initConn()
+    query = "DELETE FROM box_item WHERE id < 100"
+    cursor.execute(query)
+    conn.commit()
+

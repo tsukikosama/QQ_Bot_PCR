@@ -3,6 +3,7 @@ import json
 import os
 import re
 import uuid
+from typing import List
 
 import botpy
 from PIL import Image
@@ -11,6 +12,7 @@ from botpy.errors import ServerError
 
 from botpy.ext.cog_yaml import read
 from botpy.manage import C2CManageEvent
+from botpy.types.message import Ark, ArkKv
 
 from Conn import getTokenByOpenId, bindToken, updateTokenByOpenId, initDateBase, getRankImgByTitle, getBoxIcon, \
     getBossInfo
@@ -56,6 +58,7 @@ def matchCommod(message: Message):
             str += "上下文清空成功";
         elif action == "关闭功能":
             openid = generate_unique_id(message.author.member_openid, message.group_openid)
+
             str += "功能关闭成功,需要使用请重新开启";
         else:
             str += "匹配失败"
@@ -133,7 +136,6 @@ class MyClient(botpy.Client):
 
     async def on_friend_add(self, event: C2CManageEvent):
         _log.info("用户添加机器人：" + str(event))
-
         await self.api.post_c2c_message(
             openid=event.openid,
             msg_type=0,
@@ -254,7 +256,6 @@ class MyClient(botpy.Client):
                     strs += PcrUtils.getTodayRank();
                 if "作业" in message.content:
                     parts = text.split("作业")
-
                     numbers = re.findall(r'\d+', parts[1].strip())  # 提取所有数字
                     list = getHomeWork(numbers[0],numbers[1],numbers[2])
                     for item in list :
@@ -267,12 +268,12 @@ class MyClient(botpy.Client):
                 if "视频" in message.content:
                     parts = text.strip().split("视频")
                     strs += getUrlByID(parts[1].strip());
-                    # strs = "".join(f"\n 标题:{item.get('title')} 角色:{', '.join(map(str, item.get('role', [])))} 伤害:{item.get('damage')} " for item in list)
-                    # strs = "毛二力"
-                    # strs = "https://221.15.71.66/video/BV15sAWeREAY?t=22.1"
                 if "boss信息" in message.content:
                     list = getBossInfo()
                     strs = "".join(f"\n boss编号:{item[0]} boss名称:{item[2].strip()}" for item in list if item[2].strip());
+                if "更新会战数据" in message.content:
+                    getBox_Item();
+                    strs += "会战数据更新成功"
                 if any(keyword in message.content for keyword in keywords):
                     res = getRankImgByTitle(message.content.strip())
                     content = res[3]
@@ -282,17 +283,15 @@ class MyClient(botpy.Client):
                         file_type=1,  # 文件类型要对应上，具体支持的类型见方法说明
                         url=url,  # 文件Url
                     )
-
                     await message._api.post_group_message(
-                                        group_openid=message.group_openid,
-                                        msg_type=7,
-                                        msg_id=message.id,
-                                        media=uploadMedia,
-                                        content=content
+                        group_openid=message.group_openid,
+                        msg_type=7,
+                        msg_id=message.id,
+                        media=uploadMedia,
+                        content=content
                     )
                     return
                 await sendTemplate(message, strs)
-
 def matchCommodV2(message: Message):
     text = message.content.strip();
     pat = r"^#(\S+)\s*(?:【(.*?)】)?$"
@@ -320,9 +319,9 @@ def matchCommodV2(message: Message):
         elif action == "获取会战数据":
             getBox_Item()
             str += "保存角色数据完毕"
-        elif action == "pdf":
-            getPdf(1)
-            str += "获取pdf成功"
+        elif action == "帮助":
+
+            str += ""
         else:
             str += "匹配失败"
     return str
@@ -335,6 +334,3 @@ if __name__ == "__main__":
     client = MyClient(intents=intents)
     client.http.timeout = 30
     client.run(appid=test_config["appid"], secret=test_config["secret"])
-
-
-
