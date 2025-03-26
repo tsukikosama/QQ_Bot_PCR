@@ -13,3 +13,6 @@ PRC_RANK_STATUS = "PCR_USER"
 
 ## 群用户
 GROUP_USER = "GROUP_USER"
+
+## 公主连接bossinfo
+BOSS_INFO_CONSTANT = "BOSS_INFO:"

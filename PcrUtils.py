@@ -79,7 +79,7 @@ def sendApi(url,param):
         "appkey": base.appkey,
     }
     params.update(param)
-    # print(params)
+    print(params)
     params["sign"] = sign(params)
     print(params)
     r = session.get(url, headers=base.headers,

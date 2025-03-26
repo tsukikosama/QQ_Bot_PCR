@@ -6,6 +6,7 @@ from datetime import datetime
 import requests
 
 from Conn import saveBoxItem, getHomeWorkName, getBossInfo, clearBossInfo
+from pojo.RedisUtils import saveValueByKey, saveBossInfo
 
 params = {
     'lang': 'zh-cn',
@@ -36,16 +37,30 @@ def getBox_Item():
     jsondata = json.loads(str)
     for item in jsondata.get('data'):
         saveBoxItem(item)
-
-def getHomeWork(stage,id,flag):
+keywords = ["一王", "二王", "三王","四王","五王"]
+def getBossId():
     response = requests.get(url, params=params, headers=headers)
     arr = []
     strs = urllib.parse.unquote(response.content)
     jsondata = json.loads(strs)
     for item in jsondata.get('data'):
+        arr.append(item.get('id'))
+    unique_ids = list(dict.fromkeys(arr))
+    for i in range(5):
+        saveBossInfo(keywords[i],unique_ids[i])
+
+def getHomeWork(stage,id,flag):
+    print(stage,id,flag)
+    response = requests.get(url, params=params, headers=headers)
+    arr = []
+    strs = urllib.parse.unquote(response.content)
+    jsondata = json.loads(strs)
+    for item in jsondata.get('data'):
+        print(item.get('id') , str(id))
         if item.get('id') == str(id):
             for items in item.get('homework'):
                 print(items)
+                print(item.get('stage') == int(stage),items.get('auto') == int(flag))
                 if(item.get('stage') == int(stage) and items.get('auto') == int(flag) ):
                     role = getHomeWorkName(items.get('unit'))
                     damage = items.get('damage')
@@ -92,6 +107,6 @@ def get_sn_type(sn):
     else:
         return "未知类型"
 if __name__ == '__main__':
-    s = getBox_Item()
-    print(s)
+     getBossId()
+
     # getBox_Item()

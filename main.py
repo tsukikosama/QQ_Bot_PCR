@@ -25,7 +25,7 @@ from pojo.AiUtils import chatAi, get_session_id
 from pojo.ConmmonUtils import generate_unique_id
 from pojo.Constant import PRC_RANK_STATUS, QQ_Ai_STATUS, GROUP_USER
 from pojo.MessageUtils import sendTemplate, sendGroupMessage
-from pojo.RedisUtils import clearVluae, saveList, isExistValue, removeValueFromList
+from pojo.RedisUtils import clearVluae, saveList, isExistValue, removeValueFromList, getBossId
 
 test_config = read(os.path.join(os.path.dirname(__file__), "config.yaml"))
 
@@ -241,7 +241,8 @@ class MyClient(botpy.Client):
                              "⑥作业 查看对应的boss作业 例如 作业 1-5 36 1|2  1-5表示abcde 36表示boss编号 可以用boss查询到boss编号 1代表auto刀2表示手动刀\n"
                              "⑥视频 查看对应的boss作业的视频 例如 作业 25452-1 这个编号可以从作业功能中获取\n"
                              "⑦boss信息 获取当期的boss信息\n"
-                             "⑧刷图推荐|自动rank表|手动rank表 可以获取花舞组当期的刷图推荐|自动rank表|手动rank表")
+                             "⑧刷图推荐|自动rank表|手动rank表 可以获取花舞组当期的刷图推荐|自动rank表|手动rank表\n"
+                             "⑨作业 查询对应的boss作业 例如 1-5周目 一到五王 1|2 1-5表示abcde 一到五王表示对应的王 1代表auto刀2表示手动刀")
                 if "出刀情况" in message.content:
                     pattern = r"\d{4}-\d{2}-\d{2}"
                     re.findall(pattern, message.content)
@@ -251,6 +252,7 @@ class MyClient(botpy.Client):
                 if "公会总表" in message.content:
                     data = PcrUtils.getAllAttactCount();
                     result = []
+                    print(data)
                     for entry in data.get('data'):
                         result.append(
                             f"成员:{entry['username']} 出刀数:{entry['number']} 伤害:{entry['damage']}")
@@ -267,15 +269,35 @@ class MyClient(botpy.Client):
                     strs += PcrUtils.getTodayRank();
                 if "作业" in message.content:
                     parts = text.split("作业")
-                    numbers = re.findall(r'\d+', parts[1].strip())  # 提取所有数字
-                    list = getHomeWork(numbers[0],numbers[1],numbers[2])
-                    for item in list :
-                        temp = f"作业编号:{item.get('id')} 标题:{item.get('title')}\n角色:"
-                        role_str = ' '.join(' '.join(role) for role in item.get('role'))
-                        temp += role_str
-                        temp += f"伤害 {item.get('damage')}"
-                        temp += f"{item.get('remain')}"
-                        strs += "\n" + temp + "\n"
+                    pattern = r'(\d+)\s+([\u4e00-\u9fa5]+)\s+(\d+)|(\d+)\s+(\d+)\s+(\d+)'  # 匹配 "数字" 或 "数字+汉字"（可选）
+                    matches = re.findall(pattern, parts[1])
+                    zm = None
+                    id = None
+                    lx = None;
+                    for match in matches:
+                        if match[1]:  # 匹配到数字-汉字-数字格式
+                            zm = match[0]
+                            id = getBossId(match[1])
+                            lx = match[2]
+                        else:  # 匹配到数字-数字-数字格式
+                            zm = match[3]
+                            id = match[4]
+                            lx = match[5]
+                    # parts = text.split("作业")
+                    # numbers = re.findall(r'\d+', parts[1].strip())  # 提取所有数字
+
+                    list = getHomeWork(zm,id,lx)
+                    print(list)
+                    try:
+                        for item in list:
+                            temp = f"作业编号:{item.get('id')} 标题:{item.get('title')}\n角色:"
+                            role_str = ' '.join(' '.join(role) for role in item.get('role'))
+                            temp += role_str
+                            temp += f"伤害 {item.get('damage')}"
+                            temp += f"{item.get('remain')}"
+                            strs += "\n" + temp + "\n"
+                    except Exception as e:
+                        strs += "没有符合的作业"
                 if "视频" in message.content:
                     parts = text.strip().split("视频")
                     strs += getUrlByID(parts[1].strip());

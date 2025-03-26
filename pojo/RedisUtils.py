@@ -1,7 +1,7 @@
 import redis
 import json
 
-from pojo.Constant import  QQ_AI_CHAT_CONSTANT, QQ_Ai_STATUS
+from pojo.Constant import QQ_AI_CHAT_CONSTANT, QQ_Ai_STATUS, BOSS_INFO_CONSTANT
 
 r = redis.Redis(host='8.138.16.124', port=6379,password='2270398619', decode_responses=True)
 ## redis key 有效时间 一个小时
@@ -17,6 +17,7 @@ def saveValueByKey(key, value):
     history = getValueByKey(key)
     history.append(value)
     r.set(QQ_AI_CHAT_CONSTANT+key, json.dumps(history), ex=VALID_TIME)
+
 
 ### 通过key删除value最后一条数据
 def delFailValue(key):
@@ -56,3 +57,10 @@ def isExistValue(key,value):
         return True
     return False
 
+def saveBossInfo(key,value):
+
+    r.set(BOSS_INFO_CONSTANT + key, value, ex=VALID_TIME)
+
+def getBossId(id):
+    value = r.get(BOSS_INFO_CONSTANT + str(id))
+    return value
