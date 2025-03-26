@@ -50,14 +50,14 @@ def getHomeWork(stage,id,flag):
                 if(item.get('stage') == int(stage) and items.get('auto') == int(flag) ):
                     role = getHomeWorkName(items.get('unit'))
                     damage = items.get('damage')
-                    for sp in items.get('video'):
+                    for index,sp in enumerate(items.get('video', [])):
                         title = sp.get('text')
                         urls = sp.get('url')
                         remain=''
                         if(items.get('remain') == 1):
                             remain='--(尾刀)'
                         arr.append({
-                            'id':items.get('id'),
+                            'id': str(items.get('id')) + '-' + str(index),
                             'role': role,
                             'damage': damage,
                             'title': title,
@@ -69,15 +69,15 @@ def getHomeWork(stage,id,flag):
     return arr
 
 def getUrlByID(id):
-    print(id)
+
+    parts = id.split('-')
     response = requests.get(url, params=params, headers=headers)
     strs = urllib.parse.unquote(response.content)
     jsondata = json.loads(strs)
     for item in jsondata.get('data'):
-
         for items in item.get('homework'):
-            if(items.get('id')== int(id)):
-                match = re.search(r"BV\w+",items.get('video')[0].get('url'))
+            if(items.get('id')== int(parts[0])):
+                match = re.search(r"BV\w+",items.get('video')[int(parts[1])].get('url'))
                 if match:
                     bv_number = match.group()
     return bv_number;
