@@ -76,9 +76,7 @@ def get_latest_dynamic():
         }
         response = requests.get(API_URL, headers=headers)
         data = response.json()
-        # print(data.get('data'))
         pattern = r"\d{2}[上下]半刷图攻略＆\d{2}-\dRANK表"
-
         for item in data.get('data').get('items'):
             if re.match(pattern, item.get('content')):
                 ## 这边取匹配到的第一个数据即可
@@ -90,12 +88,14 @@ def get_latest_dynamic():
                 image_urls = [img['src'] for img in images if img.get('src')]
                 regex = r"i0\.hdslb\.com/bfs/new_dyn/[^@]+"
                 matchtext = re.match(r"\d+", item.get('content'))
+                print(image_urls)
                 ### 判断数据库中中是否存在相关数据
                 res = getRankImgByTitleId(matchtext.group(0))
                 rank_item_set = set()
                 if res == 0:
                     i = 0;
                     for url in image_urls:
+                        print(url)
                         ### 如果没有获取到相同的编号的id就是新的数据保存到数据库中
                         match = re.search(regex, url)
                         if match:
@@ -103,11 +103,13 @@ def get_latest_dynamic():
                             view_url = download_image_to_jpg("https://" + match.group(0))
                             rank_item_set.add((rank_item[i], view_url, matchtext.group(0), item.get('content')))
                             i += 1
+                            ### 匹配到了图片把图片下载到本地
+                            download_image_to_jpg("https://" + match.group(0))
                         if i > 3:
                             break
-                        ### 匹配到了图片把图片下载到本地
-                        print("https://"+match.group(0))
-                        download_image_to_jpg("https://"+match.group(0))
+
+                        # print("https://"+match.group(0))
+
                 break;
 
         saveRankImg(rank_item_set)
@@ -121,4 +123,4 @@ def monitor():
 
 
 if __name__ == "__main__":
-    monitor()
+    get_latest_dynamic()

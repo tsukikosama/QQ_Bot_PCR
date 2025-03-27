@@ -8,13 +8,13 @@ from PIL import Image
 from io import BytesIO
 import shutil
 
-path = "D:\\tp\\"
-
+# path = "D:\\tp\\"
+path = "/www/server/nginx/html/image"
 view_url = "http://8.138.16.124:8083/upload/"
 def getRandomImgName():
         # 获取文件夹内所有的文件
-        all_files = os.listdir("/www/server/nginx/html/image")
-        # all_files = os.listdir("C://Users//Administrator//PycharmProjects//crawl//downloaded_images")
+        # all_files = os.listdir("/www/server/nginx/html/image")
+        all_files = os.listdir("C://Users//Administrator//PycharmProjects//crawl//downloaded_images")
         # 筛选出所有的图片文件（可以根据需要增加其他图片格式）
         image_files = [f for f in all_files if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))]
 
@@ -44,8 +44,10 @@ def download_image_to_jpg(url):
         filename = os.path.basename(parsed_url.path)
         # 保存为 JPG 格式
         image.save(path+filename, 'JPEG')
+        print("文件保存路径",path+filename)
     else:
         logging.info("图片下载失败",url)
+
     ## 返回图片访问路径
     return view_url+filename;
 
