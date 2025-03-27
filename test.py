@@ -106,8 +106,8 @@ def get_latest_dynamic():
                         if i > 3:
                             break
                         ### 匹配到了图片把图片下载到本地
-                        # print("https://"+match.group(0))
-                        # download_image_to_jpg("https://"+match.group(0))
+                        print("https://"+match.group(0))
+                        download_image_to_jpg("https://"+match.group(0))
                 break;
 
         saveRankImg(rank_item_set)

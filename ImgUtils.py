@@ -13,8 +13,8 @@ path = "D:\\tp\\"
 view_url = "http://8.138.16.124:8083/upload/"
 def getRandomImgName():
         # 获取文件夹内所有的文件
-        # all_files = os.listdir("/www/server/nginx/html/image")
-        all_files = os.listdir("C://Users//Administrator//PycharmProjects//crawl//downloaded_images")
+        all_files = os.listdir("/www/server/nginx/html/image")
+        # all_files = os.listdir("C://Users//Administrator//PycharmProjects//crawl//downloaded_images")
         # 筛选出所有的图片文件（可以根据需要增加其他图片格式）
         image_files = [f for f in all_files if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))]
 
