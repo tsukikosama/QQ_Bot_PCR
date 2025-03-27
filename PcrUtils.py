@@ -79,9 +79,8 @@ def sendApi(url,param):
         "appkey": base.appkey,
     }
     params.update(param)
-    print(params)
     params["sign"] = sign(params)
-    print(params)
+    print(params, "params的值")
     r = session.get(url, headers=base.headers,
                     params=params)
     decoded_data = r.content.decode('utf-8', errors='replace')
@@ -139,6 +138,7 @@ def getattactCountByDate(data):
 ### 获取战斗id
 def getBattleId():
     ids =  sendApi("https://api.game.bilibili.com/game/player/tools/pcr/clan_battle_list",{})
+    print(ids)
     return ids[0].get('id');
 
 
@@ -146,10 +146,10 @@ def getBattleId():
 
 def getTodayRank(id):
     params = {
-        "ranking_time":getData() + " 05:00",
+        "ranking_time":getData().strftime("%Y-%m-%d") + " 05:00",
         "battle_id":id
     }
-
+    print(params,"当前方法的params值")
     data = sendApi("https://api.game.bilibili.com/game/player/tools/pcr/my_clan_ranking",params);
     return data;
 ###搜索rank排名
@@ -198,7 +198,7 @@ def getRankRecord(data):
     return str
 
 ## 获取今日排名结果
-def getTodayRank():
+def getTodayRankStr():
     ids = getBattleId();
     todayRank = getTodayRank(ids);
     str = ""

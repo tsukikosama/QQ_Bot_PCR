@@ -252,7 +252,6 @@ class MyClient(botpy.Client):
                 if "公会总表" in message.content:
                     data = PcrUtils.getAllAttactCount();
                     result = []
-                    print(data)
                     for entry in data.get('data'):
                         result.append(
                             f"成员:{entry['username']} 出刀数:{entry['number']} 伤害:{entry['damage']}")
@@ -266,7 +265,7 @@ class MyClient(botpy.Client):
                     data = PcrUtils.attactCount();
                     strs += PcrUtils.getAttack(data);
                 if "今日排名" in message.content:
-                    strs += PcrUtils.getTodayRank();
+                    strs += PcrUtils.getTodayRankStr();
                 if "作业" in message.content:
                     parts = text.split("作业")
                     pattern = r'(\d+)\s+([\u4e00-\u9fa5]+)\s+(\d+)|(\d+)\s+(\d+)\s+(\d+)'  # 匹配 "数字" 或 "数字+汉字"（可选）
