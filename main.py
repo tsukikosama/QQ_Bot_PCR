@@ -221,7 +221,7 @@ class MyClient(botpy.Client):
         text = message.content.strip();
         pat = r"^#(\S+)\s*(?:【(.*?)】)?$"
         ma = re.search(pat, text)
-        keywords = ["刷图推荐", "自动rank表", "手动rank表","rank表"]
+        keywords = ["刷图推荐1","刷图推荐2", "自动rank表", "手动rank表","rank表"]
         if ma:
             await sendTemplate(message, strs)
         else:
