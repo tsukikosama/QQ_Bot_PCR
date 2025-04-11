@@ -9,7 +9,7 @@ from io import BytesIO
 import shutil
 
 # path = "D:\\tp\\"
-path = "/www/server/nginx/html/image"
+path = "/www/server/nginx/html/image/"
 view_url = "http://8.138.16.124:8083/upload/"
 def getRandomImgName():
         # 获取文件夹内所有的文件
